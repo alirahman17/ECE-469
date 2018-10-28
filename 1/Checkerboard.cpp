@@ -71,7 +71,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p)
       }
       else if((* iter)->row == 0 && (* iter)->col == 7){
         //Can't Move Up or Right
-        if(board[((* iter)->row) + 1][((* iter)->col) + 1] == 0){
+        if(board[((* iter)->row) + 1][((* iter)->col) - 1] == 0){
           Move *m = new Move(r, c, r + 1, c - 1);
           mp.push_back(m);
         }
@@ -96,14 +96,75 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p)
       }
       else if((* iter)->row != 0 && (* iter)->col == 0){
 
+        if((* iter)->type == 1){
+          //Regular Piece
+          if(p == 1){
+            if(board[((* iter)->row) + 1][((* iter)->col) + 1] == 0){
+              Move *m = new Move(r, c, r + 1, c + 1);
+              mp.push_back(m);
+            }
+          } else{
+            if(board[((* iter)->row) - 1][((* iter)->col) + 1] == 0){
+              Move *m = new Move(r, c, r - 1, c + 1);
+              mp.push_back(m);
+            }
+          }
+        }
+
+
       }
       else if((* iter)->row != 0 && (* iter)->col == 7){
+
+        if((* iter)->type == 1){
+          //Regular Piece
+          if(p == 1){
+            if(board[((* iter)->row) + 1][((* iter)->col) - 1] == 0){
+              Move *m = new Move(r, c, r + 1, c - 1);
+              mp.push_back(m);
+            }
+          } else{
+            if(board[((* iter)->row) - 1][((* iter)->col) - 1] == 0){
+              Move *m = new Move(r, c, r - 1, c - 1);
+              mp.push_back(m);
+            }
+          }
+        }
 
       }
       else if((* iter)->row != 7 && (* iter)->col == 0){
 
+        if((* iter)->type == 1){
+          //Regular Piece
+          if(p == 1){
+            if(board[((* iter)->row) + 1][((* iter)->col) + 1] == 0){
+              Move *m = new Move(r, c, r + 1, c + 1);
+              mp.push_back(m);
+            }
+          } else{
+            if(board[((* iter)->row) - 1][((* iter)->col) + 1] == 0){
+              Move *m = new Move(r, c, r - 1, c + 1);
+              mp.push_back(m);
+            }
+          }
+        }
+
       }
       else if((* iter)->row != 7 && (* iter)->col == 7){
+
+        if((* iter)->type == 1){
+          //Regular Piece
+          if(p == 1){
+            if(board[((* iter)->row) + 1][((* iter)->col) - 1] == 0){
+              Move *m = new Move(r, c, r + 1, c - 1);
+              mp.push_back(m);
+            }
+          } else{
+            if(board[((* iter)->row) - 1][((* iter)->col) - 1] == 0){
+              Move *m = new Move(r, c, r - 1, c - 1);
+              mp.push_back(m);
+            }
+          }
+        }
 
       } else {
         //Can Move anywhere
