@@ -1,9 +1,9 @@
 #include <iostream>
-#include "Checkerboard.h"
+#include <string>
+#include "Checkerboard.hpp"
+#include "piece.hpp"
 
 using namespace std;
-
-char test = 219;
 
 int board[8][8] = {
   {0,1,0,1,0,1,0,1},
@@ -16,107 +16,33 @@ int board[8][8] = {
   {2,0,2,0,2,0,2,0}
 };
 
-void printBlack(){
-  cout << "\33[3" << 0 << ";4" << 0 << "m";
-  cout << 219 << 219 << 219;
-  cout << "\33[3" << 9 << ";4" << 9 << "m";
-}
-void printWhite(){
-  cout << "\33[3" << 7 << ";4" << 7 << "m";
-  cout << 219 << 219 << 219;
-  cout << "\33[3" << 9 << ";4" << 9 << "m";
-}
-
-void printP1(){
-  cout << "\33[3" << 0 << ";4" << 0 << "m";
-  cout << 219;
-  cout << "\33[3" << 1 << ";4" << 1 << "m";
-  cout << 219;
-  cout << "\33[3" << 0 << ";4" << 0 << "m";
-  cout << 219;
-  cout << "\33[3" << 9 << ";4" << 9 << "m";
-}
-
-void printP2(){
-  cout << "\33[3" << 0 << ";4" << 0 << "m";
-  cout << 219;
-  cout << "\33[3" << 7 << ";4" << 7 << "m";
-  cout << 219;
-  cout << "\33[3" << 0 << ";4" << 0 << "m";
-  cout << 219;
-  cout << "\33[3" << 9 << ";4" << 9 << "m";
-}
-
-void printBoard(){
-  for(int i = 0; i < 8; i++){
-    if(i % 2 == 1){
-      for (int k = 0; k < 5; k++){
-        for(int j = 0; j < 8; j++){
-          if(k == 2){
-            if(board[i][j] == 1){
-              printP1();
-            }
-            else if(board[i][j] == 2){
-              printP2();
-            }
-            else if(j % 2 == 1){
-              printWhite();
-            }
-            else {
-              printBlack();
-            }
-          } else{
-            if(j % 2 == 1){
-              printWhite();
-            }
-            else {
-              printBlack();
-            }
-          }
-        }
-        cout << endl;
-      }
-    } else{
-      for (int k = 0; k < 5; k++){
-        for(int j = 0; j < 8; j++){
-          if(k == 2){
-            if(board[i][j] == 1){
-              printP1();
-            }
-            else if(board[i][j] == 2){
-              printP2();
-            }
-            else if(j % 2 == 1){
-              printBlack();
-            }
-            else {
-              printWhite();
-            }
-          } else{
-            if(j % 2 == 1){
-              printBlack();
-            }
-            else {
-              printWhite();
-            }
-          }
-        }
-        cout << endl;
-      }
-    }
-  }
-}
-
+string option;
+int opt = 0;
 
 int main(){
+  bool game = 1;
+  CheckerBoard *testBoard = new CheckerBoard(board);
+  testBoard->printBoard();
 
-  printBoard();
 
-
-
-  //CheckerBoard checkerBoard;
-  //checkerBoard.initBoard();
-  //checkerBoard.printBoard();
+  while(game){
+    //Player 1
+    cout << "Select an Option\n";
+    testBoard->print_moves(1);
+    getline (cin,option);
+    int opt = stoi(option,nullptr,0);
+    cout << "You Chose: " << opt << endl;
+    testBoard->make_move(opt);
+    testBoard->printBoard();
+    //Player 2
+    cout << "Select an Option\n";
+    testBoard->print_moves(2);
+    getline (cin,option);
+    int opt2 = stoi(option,nullptr,0);
+    cout << "You Chose: " << opt2 << endl;
+    testBoard->make_move(opt2);
+    testBoard->printBoard();
+  }
 
   return 0;
 }
