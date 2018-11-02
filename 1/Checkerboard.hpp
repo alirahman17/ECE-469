@@ -15,7 +15,9 @@ class CheckerBoard {
     list<Move *> m2;
     list<Piece *> p1;
     list<Piece *> p2;
-    list <Move *> get_moves(list<Piece *> p1, list <Move *> m1, int p);
+    list <Move *> get_moves(list<Piece *> p1, list <Move *> m1, int p, vector<int> jr, vector<int> jc, Piece* pj);
+    vector<vector<int>> check_jumps(Piece* pj, vector<int> jr, vector<int> jc);
+    Piece * findPiece(int r, int c, list<Piece *> p);
     void print_moves(int p);
     void make_move(int m);
     void updateBoard();

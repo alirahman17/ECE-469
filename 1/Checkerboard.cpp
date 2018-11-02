@@ -53,59 +53,740 @@ void CheckerBoard::printP2(){
   cout << "\33[3" << 9 << ";4" << 9 << "m";
 }
 
-list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p){
+vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<int> jc){
+  vector<vector<int>> rowcol;
+  int sz = jr.size();
+  int play = pj->player;  //Piece Player
+  int t = pj->type;       //Piece Type
+  int orr = pj->row;      //Original Row
+  int oc = pj ->col;      //Original Col
+  int r = jr[jr.size() - 1];
+  int c = jc[jc.size() - 1];
+  int jump = 1;
+  int p = play;
+  if(play == p){
+
+    if(r == 0 && c != 7){
+      //Can't Move Up
+      if(board[(r) + 1][(c) - 1] == 2 && (c - 1) != 0 && p == 1){
+        if(board[(r) + 2][(c) - 2] == 0){
+          vector<int> mr = jr;    //Move Row Vector
+          vector<int> cr = jc;    //Move Column Vector
+          mr.push_back(r+2);
+          cr.push_back(c-2);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          for(int k = 0; k < rc.size(); k++){
+            rowcol.push_back(rc[k]);
+          }
+        }
+      }
+      if(board[(r) + 1][(c) + 1] == 2 && p == 1){
+        if(board[(r) + 2][(c) + 2] == 0){
+          vector<int> mr = jr;    //Move Row Vector
+          vector<int> cr = jc;    //Move Column Vector
+          mr.push_back(r+2);
+          cr.push_back(c+2);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          for(int k = 0; k < rc.size(); k++){
+            rowcol.push_back(rc[k]);
+          }
+        }
+      }
+    }
+    else if(r == 0 && c == 7){
+      //Can't Move Up or Right
+      if(board[(r) + 1][(c) - 1] == 2 && p == 1){
+        if(board[(r) + 2][(c) - 2] == 0){
+          vector<int> mr = jr;    //Move Row Vector
+          vector<int> cr = jc;    //Move Column Vector
+          mr.push_back(r+2);
+          cr.push_back(c-2);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          for(int k = 0; k < rc.size(); k++){
+            rowcol.push_back(rc[k]);
+          }
+        }
+      }
+    }
+    else if(r == 7 && c != 0){
+      //Can't Move Down
+      if(board[(r) - 1][(c) - 1] == 1 && p == 2){
+        if(board[(r) - 2][(c) - 2] == 0){
+          vector<int> mr = jr;    //Move Row Vector
+          vector<int> cr = jc;    //Move Column Vector
+          mr.push_back(r-2);
+          cr.push_back(c-2);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          for(int k = 0; k < rc.size(); k++){
+            rowcol.push_back(rc[k]);
+          }
+        }
+      }
+      if(board[(r) - 1][(c) + 1] == 1 && (c + 1) != 7 && p == 2){
+        if(board[(r) - 2][(c) + 2] == 0){
+          vector<int> mr = jr;    //Move Row Vector
+          vector<int> cr = jc;    //Move Column Vector
+          mr.push_back(r-2);
+          cr.push_back(c+2);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          for(int k = 0; k < rc.size(); k++){
+            rowcol.push_back(rc[k]);
+          }
+        }
+      }
+    }
+    else if(r == 7 && c == 0){
+      //Can't Move Down or Left
+      if(board[(r) - 1][(c) + 1] == 1 && p == 2){
+        if(board[(r) - 2][(c) + 2] == 0){
+          vector<int> mr = jr;    //Move Row Vector
+          vector<int> cr = jc;    //Move Column Vector
+          mr.push_back(r-2);
+          cr.push_back(c+2);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          for(int k = 0; k < rc.size(); k++){
+            rowcol.push_back(rc[k]);
+          }
+        }
+      }
+    }
+    else if(r != 0 && c == 0){
+      if(t == 1){
+        //Regular Piece
+        if(p == 1){
+          if(board[(r) + 1][(c) + 1] == 2){
+            if(board[(r) + 2][(c) + 2] == 0){
+              vector<int> mr = jr;    //Move Row Vector
+              vector<int> cr = jc;    //Move Column Vector
+              mr.push_back(r+2);
+              cr.push_back(c+2);
+              if((r + 2) == 7){
+                //Become King No More Jumps
+                rowcol.push_back(mr);
+                rowcol.push_back(cr);
+              } else{
+                vector<vector<int>> rc = check_jumps(pj,mr,cr);
+                for(int k = 0; k < rc.size(); k++){
+                  rowcol.push_back(rc[k]);
+                }
+              }
+            }
+          }
+        } else{
+          if(board[(r) - 1][(c) + 1] == 1 && (r - 1) != 0){
+            if(board[(r) - 2][(c) + 2] == 0){
+              vector<int> mr = jr;    //Move Row Vector
+              vector<int> cr = jc;    //Move Column Vector
+              mr.push_back(r-2);
+              cr.push_back(c+2);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              for(int k = 0; k < rc.size(); k++){
+                rowcol.push_back(rc[k]);
+              }
+            }
+          }
+        }
+      }
+
+
+    }
+    else if(r != 0 && c == 7){
+
+      if(t == 1){
+        //Regular Piece
+        if(p == 1){
+          if(board[(r) + 1][(c) - 1] == 2 && (r + 1) != 7){
+            if(board[(r) + 2][(c) - 2] == 2){
+              vector<int> mr = jr;    //Move Row Vector
+              vector<int> cr = jc;    //Move Column Vector
+              mr.push_back(r+2);
+              cr.push_back(c-2);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              for(int k = 0; k < rc.size(); k++){
+                rowcol.push_back(rc[k]);
+              }
+            }
+          }
+        } else{
+          if(board[(r) - 1][(c) - 1] == 1){
+            if(board[(r) - 2][(c) - 2] == 0){
+              vector<int> mr = jr;    //Move Row Vector
+              vector<int> cr = jc;    //Move Column Vector
+              mr.push_back(r-2);
+              cr.push_back(c-2);
+              if((r - 2) == 0){
+                //Become King No More Jumps
+                rowcol.push_back(mr);
+                rowcol.push_back(cr);
+              } else{
+                vector<vector<int>> rc = check_jumps(pj,mr,cr);
+                for(int k = 0; k < rc.size(); k++){
+                  rowcol.push_back(rc[k]);
+                }
+              }
+            }
+          }
+        }
+      }
+
+    }
+    else if(r != 7 && c == 0){
+
+      if(t == 1){
+        //Regular Piece
+        if(p == 1){
+          if(board[(r) + 1][(c) + 1] == 2){
+
+
+          }
+        } else{
+          if(board[(r) - 1][(c) + 1] == 2){
+
+
+          }
+        }
+      }
+
+    }
+    else if(r != 7 && c == 7){
+
+      if(t == 1){
+        //Regular Piece
+        if(p == 1){
+          if(board[(r) + 1][(c) - 1] == 2){
+
+
+          }
+        } else{
+          if(board[(r) - 1][(c) - 1] == 2){
+
+
+          }
+        }
+      }
+
+    } else {
+      //Can Move anywhere
+      if(t == 1){
+        //Regular Piece
+        if(p == 1){
+          if(board[(r) + 1][(c) - 1] == 2 && (r + 1) != 7 && (c - 1) != 0){
+            if(board[(r) + 2][(c) - 2] == 0){
+              vector<int> mr = jr;    //Move Row Vector
+              vector<int> cr = jc;    //Move Column Vector
+              mr.push_back(r+2);
+              cr.push_back(c-2);
+              if((r + 2) == 7){
+                //Become King No More Jumps
+                rowcol.push_back(mr);
+                rowcol.push_back(cr);
+              } else{
+                vector<vector<int>> rc = check_jumps(pj,mr,cr);
+                for(int k = 0; k < rc.size(); k++){
+                  rowcol.push_back(rc[k]);
+                }
+              }
+            }
+          }
+          if(board[(r) + 1][(c) + 1] == 2 && (r + 1) != 7 && (c + 1) != 7){
+            if(board[(r) + 2][(c) + 2] == 0){
+              vector<int> mr = jr;    //Move Row Vector
+              vector<int> cr = jc;    //Move Column Vector
+              mr.push_back(r+2);
+              cr.push_back(c+2);
+              if((r + 2) == 7){
+                //Become King No More Jumps
+                rowcol.push_back(mr);
+                rowcol.push_back(cr);
+              } else{
+                vector<vector<int>> rc = check_jumps(pj,mr,cr);
+                for(int k = 0; k < rc.size(); k++){
+                  rowcol.push_back(rc[k]);
+                }
+              }
+            }
+          }
+        } else{
+          if(board[(r) - 1][(c) - 1] == 1 && (r - 1) != 0 && (c - 1) != 0){
+            if(board[(r) - 2][(c) - 2] == 0){
+              vector<int> mr = jr;    //Move Row Vector
+              vector<int> cr = jc;    //Move Column Vector
+              mr.push_back(r-2);
+              cr.push_back(c-2);
+              if((r - 2) == 0){
+                //Become King No More Jumps
+                rowcol.push_back(mr);
+                rowcol.push_back(cr);
+              } else{
+                vector<vector<int>> rc = check_jumps(pj,mr,cr);
+                for(int k = 0; k < rc.size(); k++){
+                  rowcol.push_back(rc[k]);
+                }
+              }
+            }
+          }
+          if(board[(r) - 1][(c) + 1] == 1 && (r - 1) != 0 && (c + 1) != 7){
+            if(board[(r) - 2][(c) + 2] == 0){
+              vector<int> mr = jr;    //Move Row Vector
+              vector<int> cr = jc;    //Move Column Vector
+              mr.push_back(r-2);
+              cr.push_back(c+2);
+              if((r - 2) == 0){
+                //Become King No More Jumps
+                rowcol.push_back(mr);
+                rowcol.push_back(cr);
+              } else{
+                vector<vector<int>> rc = check_jumps(pj,mr,cr);
+                for(int k = 0; k < rc.size(); k++){
+                  rowcol.push_back(rc[k]);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+    //if rowcol empty no extra jumps
+    if(rowcol.size() == 0){
+      rowcol.push_back(jr);
+      rowcol.push_back(jc);
+      return rowcol;
+    } else{
+      return rowcol;
+    }
+
+}
+
+
+list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p, vector<int> jr, vector<int> jc, Piece* pj){
+  int jump = 0;
+  for(list<Piece *>::iterator iter = p1.begin(); iter != p1.end(); iter++){
+    vector<int> mr = jr;
+    vector<int> cr = jc;
+    if((* iter)->player == p){
+      int r = (* iter)->row;
+      int c = (* iter)->col;
+      if(r == 0 && c != 7){
+        //Can't Move Up
+        if(board[(r) + 1][(c) - 1] == 2 && (c - 1) != 0 && p == 1){
+          if(board[(r) + 2][(c) - 2] == 0){
+            jump = 1;
+            vector<int> mr = jr;
+            vector<int> cr = jc;
+            mr.push_back(r+2);
+            cr.push_back(c-2);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            for(int k = 0; k < rc.size(); k+=2){
+              Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
+              mp.push_back(m);
+            }
+          }
+        }
+        if(board[(r) + 1][(c) + 1] == 2 && p == 1){
+          if(board[(r) + 2][(c) + 2] == 0){
+            //Jump True
+            jump = 1;
+            vector<int> mr = jr;
+            vector<int> cr = jc;
+            mr.push_back(r+2);
+            cr.push_back(c+2);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            for(int k = 0; k < rc.size(); k+=2){
+              Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
+              mp.push_back(m);
+            }
+          }
+        }
+      }
+      else if(r == 0 && c == 7){
+        //Can't Move Up or Right
+        if(board[(r) + 1][(c) - 1] == 2 && p == 1){
+          if(board[(r) + 2][(c) - 2] == 0){
+            //Jump True
+            jump = 1;
+            vector<int> mr = jr;
+            vector<int> cr = jc;
+            mr.push_back(r+2);
+            cr.push_back(c-2);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            for(int k = 0; k < rc.size(); k+=2){
+              Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
+              mp.push_back(m);
+            }
+          }
+        }
+      }
+      else if(r == 7 && c != 0){
+        //Can't Move Down
+        if(board[(r) - 1][(c) - 1] == 1 && p == 2){
+          if(board[(r) - 2][(c) - 2] == 0){
+            //Jump True
+            jump = 1;
+            vector<int> mr = jr;
+            vector<int> cr = jc;
+            mr.push_back(r-2);
+            cr.push_back(c-2);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            for(int k = 0; k < rc.size(); k+=2){
+              Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
+              mp.push_back(m);
+            }
+          }
+        }
+        if(board[(r) - 1][(c) + 1] == 1 && (c + 1) != 7 && p == 2){
+          if(board[(r) - 2][(c) + 2] == 0){
+            //Jump True
+            jump = 1;
+            vector<int> mr = jr;
+            vector<int> cr = jc;
+            mr.push_back(r-2);
+            cr.push_back(c+2);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            for(int k = 0; k < rc.size(); k+=2){
+              Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
+              mp.push_back(m);
+            }
+          }
+        }
+      }
+      else if(r == 7 && c == 0){
+        //Can't Move Down or Left
+        if(board[(r) - 1][(c) + 1] == 1 && p == 2){
+          if(board[(r) - 2][(c) + 2] == 0){
+            //Jump True
+            jump = 1;
+            vector<int> mr = jr;
+            vector<int> cr = jc;
+            mr.push_back(r-2);
+            cr.push_back(c+2);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            for(int k = 0; k < rc.size(); k+=2){
+              Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
+              mp.push_back(m);
+            }
+          }
+        }
+      }
+      else if(r != 0 && c == 0){
+        if((* iter)->type == 1){
+          //Regular Piece
+          if(p == 1){
+            if(board[(r) + 1][(c) + 1] == 2){
+              if(board[(r) + 2][(c) + 2] == 0){
+                //Jump
+                jump = 1;
+                vector<int> mr = jr;
+                vector<int> cr = jc;
+                mr.push_back(r+2);
+                cr.push_back(c+2);
+                if((r + 2) == 7){
+                  //Become King No More Jumps
+                  Move *m = new Move(r,c,r,c,mr,cr);
+                  mp.push_back(m);
+                } else{
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  for(int k = 0; k < rc.size(); k+=2){
+                    Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
+                    mp.push_back(m);
+                  }
+                }
+              }
+            }
+          } else{
+            if(board[(r) - 1][(c) + 1] == 1 && (r - 1) != 0){
+              if(board[(r) - 2][(c) + 2] == 0){
+                //Jump
+                jump = 1;
+                vector<int> mr = jr;
+                vector<int> cr = jc;
+                mr.push_back(r-2);
+                cr.push_back(c+2);
+                vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                for(int k = 0; k < rc.size(); k+=2){
+                  Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
+                  mp.push_back(m);
+                }
+              }
+            }
+          }
+        }
+
+
+      }
+      else if(r != 0 && c == 7){
+
+        if((* iter)->type == 1){
+          //Regular Piece
+          if(p == 1){
+            if(board[(r) + 1][(c) - 1] == 2 && (r + 1) != 7){
+              if(board[(r) + 2][(c) - 2] == 2){
+                //Jump
+                jump = 1;
+                vector<int> mr = jr;
+                vector<int> cr = jc;
+                mr.push_back(r+2);
+                cr.push_back(c-2);
+                vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                for(int k = 0; k < rc.size(); k+=2){
+                  Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
+                  mp.push_back(m);
+                }
+              }
+            }
+          } else{
+            if(board[(r) - 1][(c) - 1] == 1){
+              if(board[(r) - 2][(c) - 2] == 0){
+                //Jump
+                jump = 1;
+                vector<int> mr = jr;
+                vector<int> cr = jc;
+                mr.push_back(r+2);
+                cr.push_back(c-2);
+                if((r - 2) == 0){
+                  //Become King No More Jumps
+                  Move *m = new Move(r,c,r,c,mr,cr);
+                  mp.push_back(m);
+                } else{
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  for(int k = 0; k < rc.size(); k+=2){
+                    Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
+                    mp.push_back(m);
+                  }
+                }
+              }
+            }
+          }
+        }
+
+      }
+      else if(r != 7 && c == 0){
+
+        if((* iter)->type == 1){
+          //Regular Piece
+          if(p == 1){
+            if(board[(r) + 1][(c) + 1] == 2){
+
+
+            }
+          } else{
+            if(board[(r) - 1][(c) + 1] == 2){
+
+
+            }
+          }
+        }
+
+      }
+      else if(r != 7 && c == 7){
+
+        if((* iter)->type == 1){
+          //Regular Piece
+          if(p == 1){
+            if(board[(r) + 1][(c) - 1] == 2){
+
+
+            }
+          } else{
+            if(board[(r) - 1][(c) - 1] == 2){
+
+
+            }
+          }
+        }
+
+      } else {
+        //Can Move anywhere
+        if((* iter)->type == 1){
+          //Regular Piece
+          if(p == 1){
+            if(board[(r) + 1][(c) - 1] == 2 && (r + 1) != 7 && (c - 1) != 0){
+              if(board[(r) + 2][(c) - 2] == 0){
+                //Jump
+                jump = 1;
+                if((r + 2) == 7){
+                  //Become King No More Jumps
+                  mr.push_back(r+2);
+                  cr.push_back(c-2);
+                  Move *m = new Move(r,c,r,c,mr,cr);
+                  mp.push_back(m);
+                } else{
+                  vector<int> mr = jr;
+                  vector<int> cr = jc;
+                  mr.push_back(r+2);
+                  cr.push_back(c-2);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  for(int k = 0; k < rc.size(); k+=2){
+                    Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
+                    mp.push_back(m);
+                  }
+                }
+              }
+            }
+            if(board[(r) + 1][(c) + 1] == 2 && (r + 1) != 7 && (c + 1) != 7){
+              if(board[(r) + 2][(c) + 2] == 0){
+                //Jump
+                jump = 1;
+                if((r + 2) == 7){
+                  //Become King No More Jumps
+                  mr.push_back(r+2);
+                  cr.push_back(c+2);
+                  Move *m = new Move(r,c,r,c,mr,cr);
+                  mp.push_back(m);
+                } else{
+                  vector<int> mr = jr;
+                  vector<int> cr = jc;
+                  mr.push_back(r+2);
+                  cr.push_back(c+2);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  for(int k = 0; k < rc.size(); k+=2){
+                    Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
+                    mp.push_back(m);
+                  }
+                }
+              }
+            }
+          } else{
+            if(board[(r) - 1][(c) - 1] == 1 && (r - 1) != 0 && (c - 1) != 0){
+              if(board[(r) - 2][(c) - 2] == 0){
+                //Jump
+                jump = 1;
+                if((r - 2) == 0){
+                  //Become King No More Jumps
+                  mr.push_back(r-2);
+                  cr.push_back(c-2);
+                  Move *m = new Move(r,c,r,c,mr,cr);
+                  mp.push_back(m);
+                } else{
+                  vector<int> mr = jr;
+                  vector<int> cr = jc;
+                  mr.push_back(r-2);
+                  cr.push_back(c-2);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  for(int k = 0; k < rc.size(); k+=2){
+                    Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
+                    mp.push_back(m);
+                  }
+                }
+              }
+            }
+            if(board[(r) - 1][(c) + 1] == 1 && (r - 1) != 0 && (c + 1) != 7){
+              if(board[(r) - 2][(c) + 2] == 0){
+                //Jump
+                jump = 1;
+                if((r - 2) == 0){
+                  //Become King No More Jumps
+                  mr.push_back(r-2);
+                  cr.push_back(c+2);
+                  Move *m = new Move(r,c,r,c,mr,cr);
+                  mp.push_back(m);
+                } else{
+                  vector<int> mr = jr;
+                  vector<int> cr = jc;
+                  mr.push_back(r-2);
+                  cr.push_back(c+2);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  for(int k = 0; k < rc.size(); k+=2){
+                    Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
+                    mp.push_back(m);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if(jump == 1){
+    return mp;
+  }
+
   for(list<Piece *>::iterator iter = p1.begin(); iter != p1.end(); iter++){
     if((* iter)->player == p){
       int r = (* iter)->row;
       int c = (* iter)->col;
-      if((* iter)->row == 0 && (* iter)->col != 7){
+      if(r == 0 && c != 7){
         //Can't Move Up
-        if(board[((* iter)->row) + 1][((* iter)->col) - 1] == 0){
-          Move *m = new Move(r, c, r + 1, c - 1);
+        if(board[(r) + 1][(c) - 1] == 0){
+          vector<int> mr = jr;
+          vector<int> cr = jc;
+          mr.push_back(r+1);
+          cr.push_back(c-1);
+          Move *m = new Move(r, c, r + 1, c - 1, mr, cr);
           mp.push_back(m);
         }
-        if(board[((* iter)->row) + 1][((* iter)->col) + 1] == 0){
-          Move *m = new Move(r, c, r + 1, c + 1);
+        if(board[(r) + 1][(c) + 1] == 0){
+          vector<int> mr = jr;
+          vector<int> cr = jc;
+          mr.push_back(r+1);
+          cr.push_back(c+1);
+          Move *m = new Move(r, c, r + 1, c + 1, mr, cr);
           mp.push_back(m);
         }
       }
-      else if((* iter)->row == 0 && (* iter)->col == 7){
+      else if(r == 0 && c == 7){
         //Can't Move Up or Right
-        if(board[((* iter)->row) + 1][((* iter)->col) - 1] == 0){
-          Move *m = new Move(r, c, r + 1, c - 1);
+        if(board[(r) + 1][(c) - 1] == 0){
+          vector<int> mr = jr;
+          vector<int> cr = jc;
+          mr.push_back(r+1);
+          cr.push_back(c-1);
+          Move *m = new Move(r, c, r + 1, c - 1, mr, cr);
           mp.push_back(m);
         }
       }
-      else if((* iter)->row == 7 && (* iter)->col != 0){
+      else if(r == 7 && c != 0){
         //Can't Move Down
-        if(board[((* iter)->row) - 1][((* iter)->col) - 1] == 0){
-          Move *m = new Move(r, c, r - 1, c - 1);
+        if(board[(r) - 1][(c) - 1] == 0){
+          vector<int> mr = jr;
+          vector<int> cr = jc;
+          mr.push_back(r-1);
+          cr.push_back(c-1);
+          Move *m = new Move(r, c, r - 1, c - 1, mr, cr);
           mp.push_back(m);
         }
-        if(board[((* iter)->row) - 1][((* iter)->col) + 1] == 0){
-          Move *m = new Move(r, c, r - 1, c + 1);
+        if(board[(r) - 1][(c) + 1] == 0){
+          vector<int> mr = jr;
+          vector<int> cr = jc;
+          mr.push_back(r-1);
+          cr.push_back(c+1);
+          Move *m = new Move(r, c, r - 1, c + 1, mr, cr);
           mp.push_back(m);
         }
       }
-      else if((* iter)->row == 7 && (* iter)->col == 0){
+      else if(r == 7 && c == 0){
         //Can't Move Down or Left
-        if(board[((* iter)->row) - 1][((* iter)->col) + 1] == 0){
-          Move *m = new Move(r, c, r - 1, c + 1);
+        if(board[(r) - 1][(c) + 1] == 0){
+          vector<int> mr = jr;
+          vector<int> cr = jc;
+          mr.push_back(r-1);
+          cr.push_back(c+1);
+          Move *m = new Move(r, c, r - 1, c + 1, mr, cr);
           mp.push_back(m);
         }
       }
-      else if((* iter)->row != 0 && (* iter)->col == 0){
+      else if(r != 0 && c == 0){
 
         if((* iter)->type == 1){
           //Regular Piece
           if(p == 1){
-            if(board[((* iter)->row) + 1][((* iter)->col) + 1] == 0){
-              Move *m = new Move(r, c, r + 1, c + 1);
+            if(board[(r) + 1][(c) + 1] == 0){
+              vector<int> mr = jr;
+              vector<int> cr = jc;
+              mr.push_back(r+1);
+              cr.push_back(c+1);
+              Move *m = new Move(r, c, r + 1, c + 1, mr, cr);
               mp.push_back(m);
             }
           } else{
-            if(board[((* iter)->row) - 1][((* iter)->col) + 1] == 0){
-              Move *m = new Move(r, c, r - 1, c + 1);
+            if(board[(r) - 1][(c) + 1] == 0){
+              vector<int> mr = jr;
+              vector<int> cr = jc;
+              mr.push_back(r-1);
+              cr.push_back(c+1);
+              Move *m = new Move(r, c, r - 1, c + 1, mr, cr);
               mp.push_back(m);
             }
           }
@@ -113,54 +794,78 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p)
 
 
       }
-      else if((* iter)->row != 0 && (* iter)->col == 7){
+      else if(r != 0 && c == 7){
 
         if((* iter)->type == 1){
           //Regular Piece
           if(p == 1){
-            if(board[((* iter)->row) + 1][((* iter)->col) - 1] == 0){
-              Move *m = new Move(r, c, r + 1, c - 1);
+            if(board[(r) + 1][(c) - 1] == 0){
+              vector<int> mr = jr;
+              vector<int> cr = jc;
+              mr.push_back(r+1);
+              cr.push_back(c-1);
+              Move *m = new Move(r, c, r + 1, c - 1, mr, cr);
               mp.push_back(m);
             }
           } else{
-            if(board[((* iter)->row) - 1][((* iter)->col) - 1] == 0){
-              Move *m = new Move(r, c, r - 1, c - 1);
+            if(board[(r) - 1][(c) - 1] == 0){
+              vector<int> mr = jr;
+              vector<int> cr = jc;
+              mr.push_back(r-1);
+              cr.push_back(c-1);
+              Move *m = new Move(r, c, r - 1, c - 1, mr, cr);
               mp.push_back(m);
             }
           }
         }
 
       }
-      else if((* iter)->row != 7 && (* iter)->col == 0){
+      else if(r != 7 && c == 0){
 
         if((* iter)->type == 1){
           //Regular Piece
           if(p == 1){
-            if(board[((* iter)->row) + 1][((* iter)->col) + 1] == 0){
-              Move *m = new Move(r, c, r + 1, c + 1);
+            if(board[(r) + 1][(c) + 1] == 0){
+              vector<int> mr = jr;
+              vector<int> cr = jc;
+              mr.push_back(r+1);
+              cr.push_back(c+1);
+              Move *m = new Move(r, c, r + 1, c + 1, mr, cr);
               mp.push_back(m);
             }
           } else{
-            if(board[((* iter)->row) - 1][((* iter)->col) + 1] == 0){
-              Move *m = new Move(r, c, r - 1, c + 1);
+            if(board[(r) - 1][(c) + 1] == 0){
+              vector<int> mr = jr;
+              vector<int> cr = jc;
+              mr.push_back(r-1);
+              cr.push_back(c+1);
+              Move *m = new Move(r, c, r - 1, c + 1, mr, cr);
               mp.push_back(m);
             }
           }
         }
 
       }
-      else if((* iter)->row != 7 && (* iter)->col == 7){
+      else if(r != 7 && c == 7){
 
         if((* iter)->type == 1){
           //Regular Piece
           if(p == 1){
-            if(board[((* iter)->row) + 1][((* iter)->col) - 1] == 0){
-              Move *m = new Move(r, c, r + 1, c - 1);
+            if(board[(r) + 1][(c) - 1] == 0){
+              vector<int> mr = jr;
+              vector<int> cr = jc;
+              mr.push_back(r+1);
+              cr.push_back(c-1);
+              Move *m = new Move(r, c, r + 1, c - 1, mr, cr);
               mp.push_back(m);
             }
           } else{
-            if(board[((* iter)->row) - 1][((* iter)->col) - 1] == 0){
-              Move *m = new Move(r, c, r - 1, c - 1);
+            if(board[(r) - 1][(c) - 1] == 0){
+              vector<int> mr = jr;
+              vector<int> cr = jc;
+              mr.push_back(r-1);
+              cr.push_back(c-1);
+              Move *m = new Move(r, c, r - 1, c - 1, mr, cr);
               mp.push_back(m);
             }
           }
@@ -171,29 +876,37 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p)
         if((* iter)->type == 1){
           //Regular Piece
           if(p == 1){
-            if(board[((* iter)->row) + 1][((* iter)->col) - 1] == 2){
-              if(board[((* iter)->row) + 2][((* iter)->col) - 2] == 0){
-                //Jump
-                Move *m = new Move(r, c, r + 2, c - 2);
-                mp.push_back(m);
-              }
-            }
-
-            if(board[((* iter)->row) + 1][((* iter)->col) - 1] == 0){
-              Move *m = new Move(r, c, r + 1, c - 1);
+            if(board[(r) + 1][(c) - 1] == 0){
+              vector<int> mr = jr;
+              vector<int> cr = jc;
+              mr.push_back(r+1);
+              cr.push_back(c-1);
+              Move *m = new Move(r, c, r + 1, c - 1, mr, cr);
               mp.push_back(m);
             }
-            if(board[((* iter)->row) + 1][((* iter)->col) + 1] == 0){
-              Move *m = new Move(r, c, r + 1, c + 1);
+            if(board[(r) + 1][(c) + 1] == 0){
+              vector<int> mr = jr;
+              vector<int> cr = jc;
+              mr.push_back(r+1);
+              cr.push_back(c+1);
+              Move *m = new Move(r, c, r + 1, c + 1, mr, cr);
               mp.push_back(m);
             }
           } else{
-            if(board[((* iter)->row) - 1][((* iter)->col) - 1] == 0){
-              Move *m = new Move(r, c, r - 1, c - 1);
+            if(board[(r) - 1][(c) - 1] == 0){
+              vector<int> mr = jr;
+              vector<int> cr = jc;
+              mr.push_back(r-1);
+              cr.push_back(c-1);
+              Move *m = new Move(r, c, r - 1, c - 1, mr, cr);
               mp.push_back(m);
             }
-            if(board[((* iter)->row) - 1][((* iter)->col) + 1] == 0){
-              Move *m = new Move(r, c, r - 1, c + 1);
+            if(board[(r) - 1][(c) + 1] == 0){
+              vector<int> mr = jr;
+              vector<int> cr = jc;
+              mr.push_back(r-1);
+              cr.push_back(c+1);
+              Move *m = new Move(r, c, r - 1, c + 1, mr, cr);
               mp.push_back(m);
             }
           }
@@ -204,18 +917,50 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p)
   return mp;
 }
 
+Piece * CheckerBoard::findPiece(int r, int c, list<Piece *> p){
+  for(list<Piece *>::iterator iter = p.begin(); iter != p.end(); iter++){
+    if((*iter)->row == r && (*iter)->col == c){
+      return *iter;
+    }
+  }
+}
+
+
 void CheckerBoard::make_move(int m){
   if(m > 0 && m <= this->m1.size()){
     list<Move *>::iterator iter = this->m1.begin();
     advance(iter,m-1);
-    cout << "Current: R" << (* iter)->cur_row << ",C" << (* iter)->cur_col << " -> R" << (* iter)->next_row << ",C" << (* iter)->next_col << endl;
     for(list<Piece *>::iterator it = this->p1.begin(); it != this->p1.end(); it++){
       if((* it)->row == (* iter)->cur_row && (* it)->col == (* iter)->cur_col){
         //cout << ++k << endl;
-        int nr = (* iter)->next_row;
-        int nc = (* iter)->next_col;
+        int nr = (* iter)->mrow[(* iter)->mrow.size()-1];
+        int nc = (* iter)->mcol[(* iter)->mcol.size()-1];
         int play = (* it)->player;
         int t = (* it)->type;
+        //Delete any pieces between
+        if( abs(nr - (* iter)->cur_row) != 1){
+          cout << "DELETE PIECES\n";
+          for(int k = 0; k < (* iter)->mcol.size(); k ++){
+
+            if(k == 0){
+              int dr = ((* iter)->mrow[k] - (* iter)->cur_row)/2;
+              int dc = ((* iter)->mcol[k] - (* iter)->cur_col)/2;
+              Piece* tmp = findPiece((* iter)->cur_row + dr, (* iter)->cur_col + dc,p1);
+              //cout << "R" << (* iter)->cur_row + dr << ",C" << (* iter)->cur_col + dc << endl;
+              p1.remove(tmp);
+            } else{
+              int dr = ( (* iter)->mrow[k] - (* iter)->mrow[k-1] ) / 2;
+              int dc = ( (* iter)->mcol[k] - (* iter)->mcol[k-1] ) / 2;
+              cout << "DR: " << dr << ",DC:" << dc << endl;
+              Piece* tmp2 = findPiece((* iter)->mrow[k-1] + dr, (* iter)->mcol[k-1] + dc,p1);
+              cout << (* iter)->mcol.size() << " TEST:R" << (* iter)->mrow[k-1] + dr << ",C" << (* iter)->mcol[k-1] + dc << endl;
+              cout << (* iter)->mcol.size() << " PIEC:R" << tmp2->row << ",C" << tmp2->col << endl;
+              p1.remove(tmp2);
+
+            }
+
+          }
+        }
         cout << "NR: " << nr << ", NC: " << nc << ", PLAY: " << play << ", T: " << t << endl;
         p1.erase(it);
         Piece *p2 = new Piece(nr, nc, play, t);
@@ -230,13 +975,19 @@ void CheckerBoard::make_move(int m){
 
 void CheckerBoard::print_moves(int p){
   this->m1.clear();
-  this->m1 = this->get_moves(this->p1, this->m1, p);
+  vector<int> rows;
+  vector<int> cols;
+  Piece *pj = new Piece(0,0,0,0);
+  this->m1 = this->get_moves(this->p1, this->m1, p, rows, cols, pj);
   cerr << "Moves: " << this->m1.size() << endl;
-
-  int k = 0;
+  int z = 0;
   for(list<Move *>::iterator iter = this->m1.begin(); iter != this->m1.end(); iter++){
-    cout << "Option " << ++k;
-    cout << ": R" << (* iter)->cur_row << ",C" << (* iter)->cur_col << " -> R" << (* iter)->next_row << ",C" << (* iter)->next_col << endl;
+    cout << "Option " << ++z;
+    cout << ": R" << (* iter)->cur_row << ",C" << (* iter)->cur_col;
+    for(int k = 0; k < (* iter)->mrow.size(); k++){
+      cout << " -> R" << (* iter)->mrow[k] << ",C" << (* iter)->mcol[k];
+    }
+    cout << endl;
   }
 }
 
