@@ -460,42 +460,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
       }
 
     }
-    else if(r != 7 && c == 0){
-
-      if(t == 1){
-        //Regular Piece
-        if(p == 1){
-          if(sampleBoard[(r) + 1][(c) + 1] == 2){
-
-
-          }
-        } else{
-          if(sampleBoard[(r) - 1][(c) + 1] == 2){
-
-
-          }
-        }
-      }
-
-    }
-    else if(r != 7 && c == 7){
-
-      if(t == 1){
-        //Regular Piece
-        if(p == 1){
-          if(sampleBoard[(r) + 1][(c) - 1] == 2){
-
-
-          }
-        } else{
-          if(sampleBoard[(r) - 1][(c) - 1] == 2){
-
-
-          }
-        }
-      }
-
-    } else {
+    else {
       //Can Move anywhere
       if(t == 1){
         //Regular Piece
