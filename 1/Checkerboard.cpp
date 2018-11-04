@@ -1,10 +1,12 @@
 #include <iostream>
 #include <iterator>
 #include <list>
+#include <ctime>
 #include <vector>
 #include "CheckerBoard.hpp"
 #include "piece.hpp"
 #include <string.h>
+#include <climits>
 
 using namespace std;
 
@@ -18,9 +20,252 @@ CheckerBoard::CheckerBoard(int load[8][8]){
       } else if(board[i][j] == 2){
         Piece *p = new Piece(i, j, 2, 1);
         p1.push_back(p);
+      } else if(board[i][j] == 3){
+        Piece *p = new Piece(i, j, 1, 2);
+        p1.push_back(p);
+      } else if(board[i][j] == 4){
+        Piece *p = new Piece(i, j, 2, 2);
+        p1.push_back(p);
       }
     }
   }
+}
+
+int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list <Move *> mi, list<Piece *> pi, int p, double timeRemaining, double startTime, double stoptime, int odepth){
+  vector<int> mr;
+  vector<int> mc;
+  Move *m = new Move(0,0,0,0,mr,mc);
+  if(depth == 0){
+    if(p == 2){
+      return evaluate_move(mi, pi);
+    } else{
+      return -evaluate_move(mi, pi);
+    }
+  }
+  //
+  int p2 = 0;
+  if(p == 1){
+    p2 = 2;
+  } else{
+    p2 = 1;
+  }
+  int bestMove = 0;
+  int returnedmove = 0;
+  list<Move*> mv = get_moves(pi, p, mr, mc);
+  int oldAlpha = Alpha;
+  int Score = -10000;
+  int tmp;
+  for(int i = 0; i < mv.size(); i++){
+    list <Piece *> pk = sample_move(i,mv,pi);
+    clock_t t2 = clock();
+    if((((double)t2 - startTime)/(CLOCKS_PER_SEC)) > (0.9 * stoptime)){
+      cout << "TimeLimit Reached: " << Beta << endl;;
+      return INT_MAX;
+    }
+    Score = -AlphaBeta(depth-1, -Beta,-Alpha, mv, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth);
+    if(Score == (INT_MAX || -INT_MAX)){
+      return INT_MAX;
+    }
+    //cout << "Depth: " << depth << " - > Score: " << Score << ", Time: " << ((double)t2 - startTime)/(CLOCKS_PER_SEC) << endl;
+    if(Score > Alpha){
+      if(Score >= Beta){
+        return Beta;
+      }
+      Alpha = Score;
+      tmp = i;
+    }
+  }
+  //cout << "Alpha (" << depth << "): " << Alpha << endl;
+  if(oldAlpha != Alpha && Score != (INT_MAX || -INT_MAX)){
+    aimove.clear();
+    aimove.push_back(tmp+1);
+  }
+  clock_t t3 = clock();
+  if((((double)t3 - startTime)/(CLOCKS_PER_SEC)) < (0.6 * stoptime) && depth == odepth && mi.size() != 1){
+    cout << "Depth Reached" << depth << endl;
+    Score = AlphaBeta(depth+1, Alpha, Beta, mi, pi, p, timeRemaining, startTime, stoptime, odepth+1);
+  }
+  return Alpha;
+}
+
+int CheckerBoard::ai_move(double timeRemaining){
+  clock_t t1 = clock();
+  //int moveval = minimax(0, 2, this->m1, this->p1);
+  int moveval = AlphaBeta(1,-10000,10000, this->m1, this->p1, 2, timeRemaining, (double)t1, timeRemaining, 1);
+  clock_t t2 = clock();
+  //cout << moveval << endl;
+  double timeDiff = ((double) (t2 - t1)) / CLOCKS_PER_SEC;
+  cout << "ALPHABETA TOOK " << timeDiff << " seconds\n";
+  return aimove[0];
+}
+
+int CheckerBoard::evaluate_move(list<Move *> mi, list<Piece *> pi){
+  int t = 0;
+  int t2 = 0;
+  int t3 = 0;
+  int t4 = 0;
+  int m1 = 0;
+  int m2 = 0;
+  int k1a = 0;
+  int k2a = 0;
+  int k1b = 0;
+  int k2b = 0;
+  for(list<Piece *>::iterator iter2 = this->p1.begin(); iter2 != this->p1.end(); iter2++){
+    if((*iter2) ->player == 2){
+      t3 += heuristicBoard[(*iter2)->row][(*iter2)->col];
+      m2++;
+      if((*iter2) ->type == 2){
+        k2a++;
+      }
+    }
+    if((*iter2) ->player == 1){
+      t4++;//t4 += heuristicBoard[(*iter2)->row][(*iter2)->row];
+      if((*iter2) ->type == 2){
+        k1a++;
+      }
+    }
+
+  }
+  for(list<Piece *>::iterator iter2 = pi.begin(); iter2 != pi.end(); iter2++){
+    if((*iter2) ->player == 2){
+      t += heuristicBoard[(*iter2)->row][(*iter2)->col];
+      m1++;
+      if((*iter2) ->type == 2){
+        k2b++;
+      }
+    }
+    if((*iter2) ->player == 1){
+      t2++;//t2 += heuristicBoard[(*iter2)->row][(*iter2)->row];
+      if((*iter2) ->type == 2){
+        k1b++;
+      }
+    }
+  }
+  if(t2 == 0){
+    t = 10000;
+  }
+  if(m1 == 0){
+    t = -10000;
+  }
+  //t += ((t4 - t2) * 5);
+  //t -= (5 * (m2 - m1));
+  t-= ((m2-m1)*50);
+  t-= ((k2a-k2b)*50);
+  t-= ((k1b-k1a)*50);
+  t-= ((t2-t4)*50);
+  //t+= ((m1-m2)*5) + ((k2b-k2a)*5) - ((k1b-k1a)*5) + ((t4-t2)*5);
+  return t;
+
+
+  /*list <int> moveval;
+
+  int i = 0;
+  for(list<Move *>::iterator iter = mi.begin(); iter != mi.end(); iter++){
+    int t = 0;
+    int t2 = 0;
+    int t3 = 0;
+    int t4 = 0;
+    int m1 = 0;
+    int m2 = 0;
+    list <Piece *> pk = sample_move(i, mi, pi);
+    for(list<Piece *>::iterator iter2 = this->p1.begin(); iter2 != this->p1.end(); iter2++){
+      if((*iter2) ->player == 2)
+        m2++;
+    }
+    for(list<Piece *>::iterator iter2 = pi.begin(); iter2 != pi.end(); iter2++){
+      if((*iter2) ->player == 2){
+        t3 += heuristicBoard[(*iter2)->row][(*iter2)->col];
+        //m2++;
+      }
+      if((*iter2) ->player == 1)
+        t4++;//t4 += heuristicBoard[(*iter2)->row][(*iter2)->row];
+    }
+    for(list<Piece *>::iterator iter2 = pk.begin(); iter2 != pk.end(); iter2++){
+      if((*iter2) ->player == 2){
+        t += heuristicBoard[(*iter2)->row][(*iter2)->col];
+        m1++;
+      }
+      if((*iter2) ->player == 1)
+        t2++;//t2 += heuristicBoard[(*iter2)->row][(*iter2)->row];
+    }
+    t += ((t4 - t2) * 5);
+    t -= (10 * (m2 - m1));
+    moveval.push_back(t);
+    i++;
+  }
+  int max = 0;
+  int k = 0;
+  int movevalue;
+  for(list<int>::iterator iter3 = moveval.begin(); iter3 != moveval.end(); iter3++){
+    k++;
+    if(max < (*iter3)){
+      movevalue = k;
+      max = *iter3;
+    }
+  }
+  //cout << "Move: " << movevalue << endl;
+  return movevalue;*/
+}
+
+list <int> CheckerBoard::evaluate_moves(list<Move *> mi){
+  list <int> moveval;
+  for(list<Move *>::iterator iter = mi.begin(); iter != mi.end(); iter++){
+    int t = heuristicBoard[(*iter)->mrow[(*iter)->mrow.size()-1]][(*iter)->mcol[(*iter)->mcol.size()-1]];
+    if(abs((*iter)->mrow[0] - (*iter)->cur_row) == 1){
+      //No Jumps
+    } else{
+      t += ((*iter)->mrow.size()) * 5;
+    }
+    moveval.push_back(t);
+  }
+  return moveval;
+}
+
+list <Piece *> CheckerBoard::sample_move(int m, list <Move *> mn, list <Piece *> pn){
+  list <Move *> mx = mn;
+  list <Piece *> px = pn;
+    list<Move *>::iterator iter = mx.begin();
+    advance(iter,m-1);
+    for(list<Piece *>::iterator it = px.begin(); it != px.end(); it++){
+      if((* it)->row == (* iter)->cur_row && (* it)->col == (* iter)->cur_col){
+        //cout << ++k << endl;
+        int nr = (* iter)->mrow[(* iter)->mrow.size()-1];
+        int nc = (* iter)->mcol[(* iter)->mcol.size()-1];
+        int play = (* it)->player;
+        int t = (* it)->type;
+        //Delete any pieces between
+        if( abs(nr - (* iter)->cur_row) != 1){
+          for(int k = 0; k < (* iter)->mcol.size(); k ++){
+
+            if(k == 0){
+              int dr = ((* iter)->mrow[k] - (* iter)->cur_row)/2;
+              int dc = ((* iter)->mcol[k] - (* iter)->cur_col)/2;
+              Piece* tmp = findPiece((* iter)->cur_row + dr, (* iter)->cur_col + dc,px);
+              //cout << "R" << (* iter)->cur_row + dr << ",C" << (* iter)->cur_col + dc << endl;
+              px.remove(tmp);
+            } else{
+              int dr = ( (* iter)->mrow[k] - (* iter)->mrow[k-1] ) / 2;
+              int dc = ( (* iter)->mcol[k] - (* iter)->mcol[k-1] ) / 2;
+              Piece* tmp2 = findPiece((* iter)->mrow[k-1] + dr, (* iter)->mcol[k-1] + dc,px);
+              px.remove(tmp2);
+
+            }
+
+          }
+        }
+        if(play == 1 && nr == 7){
+          t = 2;
+        }
+        if(play == 2 && nr == 0){
+          t = 2;
+        }
+        px.erase(it);
+        Piece *p2 = new Piece(nr, nc, play, t);
+        px.push_back(p2);
+        break;
+      }
+    }
+    return px;
 }
 
 void CheckerBoard::printBlack(){
@@ -74,7 +319,7 @@ void CheckerBoard::printP2k(){
   cout << "\33[3" << 9 << ";4" << 9 << "m";
 }
 
-vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<int> jc){
+vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<int> jc, int tboard[8][8]){
   vector<vector<int>> rowcol;
   int sz = jr.size();
   int play = pj->player;  //Piece Player
@@ -85,13 +330,9 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
   int c = jc[jc.size() - 1];
   int jump = 1;
   int p = play;
-  bool pp = true;
-  bool mp = true;
-  bool pm = true;
-  bool mm = true;
   if(play == p){
     int sampleBoard[8][8] = {0};
-    memcpy(sampleBoard,board,sizeof(board));
+    memcpy(sampleBoard,tboard,sizeof(board));
 
     for(int k = 0; k < jr.size(); k++){
 
@@ -128,7 +369,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
           vector<int> cr = jc;    //Move Column Vector
           mr.push_back(r+2);
           cr.push_back(c-2);
-          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
           for(int k = 0; k < rc.size(); k++){
             rowcol.push_back(rc[k]);
           }
@@ -140,7 +381,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
           vector<int> cr = jc;    //Move Column Vector
           mr.push_back(r+2);
           cr.push_back(c+2);
-          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
           for(int k = 0; k < rc.size(); k++){
             rowcol.push_back(rc[k]);
           }
@@ -152,7 +393,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
           vector<int> cr = jc;    //Move Column Vector
           mr.push_back(r+2);
           cr.push_back(c-2);
-          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
           for(int k = 0; k < rc.size(); k++){
             rowcol.push_back(rc[k]);
           }
@@ -164,7 +405,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
           vector<int> cr = jc;    //Move Column Vector
           mr.push_back(r+2);
           cr.push_back(c+2);
-          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
           for(int k = 0; k < rc.size(); k++){
             rowcol.push_back(rc[k]);
           }
@@ -179,7 +420,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
           vector<int> cr = jc;    //Move Column Vector
           mr.push_back(r+2);
           cr.push_back(c-2);
-          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
           for(int k = 0; k < rc.size(); k++){
             rowcol.push_back(rc[k]);
           }
@@ -191,7 +432,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
           vector<int> cr = jc;    //Move Column Vector
           mr.push_back(r+2);
           cr.push_back(c-2);
-          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
           for(int k = 0; k < rc.size(); k++){
             rowcol.push_back(rc[k]);
           }
@@ -206,7 +447,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
           vector<int> cr = jc;    //Move Column Vector
           mr.push_back(r-2);
           cr.push_back(c-2);
-          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
           for(int k = 0; k < rc.size(); k++){
             rowcol.push_back(rc[k]);
           }
@@ -218,7 +459,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
           vector<int> cr = jc;    //Move Column Vector
           mr.push_back(r-2);
           cr.push_back(c+2);
-          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
           for(int k = 0; k < rc.size(); k++){
             rowcol.push_back(rc[k]);
           }
@@ -230,7 +471,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
           vector<int> cr = jc;    //Move Column Vector
           mr.push_back(r-2);
           cr.push_back(c-2);
-          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
           for(int k = 0; k < rc.size(); k++){
             rowcol.push_back(rc[k]);
           }
@@ -242,7 +483,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
           vector<int> cr = jc;    //Move Column Vector
           mr.push_back(r-2);
           cr.push_back(c+2);
-          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
           for(int k = 0; k < rc.size(); k++){
             rowcol.push_back(rc[k]);
           }
@@ -257,7 +498,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
           vector<int> cr = jc;    //Move Column Vector
           mr.push_back(r-2);
           cr.push_back(c+2);
-          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
           for(int k = 0; k < rc.size(); k++){
             rowcol.push_back(rc[k]);
           }
@@ -269,7 +510,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
           vector<int> cr = jc;    //Move Column Vector
           mr.push_back(r-2);
           cr.push_back(c+2);
-          vector<vector<int>> rc = check_jumps(pj,mr,cr);
+          vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
           for(int k = 0; k < rc.size(); k++){
             rowcol.push_back(rc[k]);
           }
@@ -291,7 +532,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
                 rowcol.push_back(mr);
                 rowcol.push_back(cr);
               } else{
-                vector<vector<int>> rc = check_jumps(pj,mr,cr);
+                vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
                 for(int k = 0; k < rc.size(); k++){
                   rowcol.push_back(rc[k]);
                 }
@@ -305,7 +546,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r-2);
               cr.push_back(c+2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -320,7 +561,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r+2);
               cr.push_back(c+2);
-                vector<vector<int>> rc = check_jumps(pj,mr,cr);
+                vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
                 for(int k = 0; k < rc.size(); k++){
                   rowcol.push_back(rc[k]);
                 }
@@ -332,7 +573,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r-2);
               cr.push_back(c+2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -345,7 +586,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r+2);
               cr.push_back(c+2);
-                vector<vector<int>> rc = check_jumps(pj,mr,cr);
+                vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
                 for(int k = 0; k < rc.size(); k++){
                   rowcol.push_back(rc[k]);
                 }
@@ -357,7 +598,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r-2);
               cr.push_back(c+2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -379,7 +620,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r+2);
               cr.push_back(c-2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -397,7 +638,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
                 rowcol.push_back(mr);
                 rowcol.push_back(cr);
               } else{
-                vector<vector<int>> rc = check_jumps(pj,mr,cr);
+                vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
                 for(int k = 0; k < rc.size(); k++){
                   rowcol.push_back(rc[k]);
                 }
@@ -413,7 +654,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r+2);
               cr.push_back(c-2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -425,7 +666,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r-2);
               cr.push_back(c-2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -438,7 +679,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r+2);
               cr.push_back(c-2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -450,7 +691,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r-2);
               cr.push_back(c-2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -476,7 +717,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
                 rowcol.push_back(mr);
                 rowcol.push_back(cr);
               } else{
-                vector<vector<int>> rc = check_jumps(pj,mr,cr);
+                vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
                 for(int k = 0; k < rc.size(); k++){
                   rowcol.push_back(rc[k]);
                 }
@@ -494,7 +735,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
                 rowcol.push_back(mr);
                 rowcol.push_back(cr);
               } else{
-                vector<vector<int>> rc = check_jumps(pj,mr,cr);
+                vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
                 for(int k = 0; k < rc.size(); k++){
                   rowcol.push_back(rc[k]);
                 }
@@ -513,7 +754,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
                 rowcol.push_back(mr);
                 rowcol.push_back(cr);
               } else{
-                vector<vector<int>> rc = check_jumps(pj,mr,cr);
+                vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
                 for(int k = 0; k < rc.size(); k++){
                   rowcol.push_back(rc[k]);
                 }
@@ -531,7 +772,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
                 rowcol.push_back(mr);
                 rowcol.push_back(cr);
               } else{
-                vector<vector<int>> rc = check_jumps(pj,mr,cr);
+                vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
                 for(int k = 0; k < rc.size(); k++){
                   rowcol.push_back(rc[k]);
                 }
@@ -548,7 +789,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r+2);
               cr.push_back(c-2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -560,7 +801,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r+2);
               cr.push_back(c+2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -572,7 +813,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r-2);
               cr.push_back(c-2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -584,7 +825,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r-2);
               cr.push_back(c+2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -597,7 +838,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r+2);
               cr.push_back(c-2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -609,7 +850,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r+2);
               cr.push_back(c+2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -621,7 +862,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r-2);
               cr.push_back(c-2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -633,7 +874,7 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
               vector<int> cr = jc;    //Move Column Vector
               mr.push_back(r-2);
               cr.push_back(c+2);
-              vector<vector<int>> rc = check_jumps(pj,mr,cr);
+              vector<vector<int>> rc = check_jumps(pj,mr,cr,board);
               for(int k = 0; k < rc.size(); k++){
                 rowcol.push_back(rc[k]);
               }
@@ -655,10 +896,27 @@ vector<vector<int>> CheckerBoard::check_jumps(Piece* pj, vector<int> jr, vector<
 }
 
 
-list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p, vector<int> jr, vector<int> jc, Piece* pj){
+list <Move *> CheckerBoard::get_moves(list<Piece *> p1, int p, vector<int> jr, vector<int> jc){
   int jump = 0;
   int sampleBoard[8][8] = {0};
-  memcpy(sampleBoard,board,sizeof(board));
+
+  list <Move *> mp;
+
+  for(list<Piece *>::iterator iter = p1.begin(); iter != p1.end(); iter++){
+    if((* iter)->player == 1){
+      if((* iter)->type == 1){
+        sampleBoard[(* iter)->row][(* iter)->col] = 1;
+      } else{
+        sampleBoard[(* iter)->row][(* iter)->col] = 3;
+      }
+    } else{
+      if((* iter)->type == 1){
+        sampleBoard[(* iter)->row][(* iter)->col] = 2;
+      } else{
+        sampleBoard[(* iter)->row][(* iter)->col] = 4;
+      }
+    }
+  }
 
   for(int i = 0; i < 8; i++){
     for(int j = 0; j < 8; j++){
@@ -687,7 +945,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
             vector<int> cr = jc;
             mr.push_back(r+2);
             cr.push_back(c-2);
-            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
             for(int k = 0; k < rc.size(); k+=2){
               Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
               mp.push_back(m);
@@ -702,7 +960,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
             vector<int> cr = jc;
             mr.push_back(r+2);
             cr.push_back(c+2);
-            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
             for(int k = 0; k < rc.size(); k+=2){
               Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
               mp.push_back(m);
@@ -716,7 +974,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
             vector<int> cr = jc;
             mr.push_back(r+2);
             cr.push_back(c-2);
-            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
             for(int k = 0; k < rc.size(); k+=2){
               Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
               mp.push_back(m);
@@ -731,7 +989,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
             vector<int> cr = jc;
             mr.push_back(r+2);
             cr.push_back(c+2);
-            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
             for(int k = 0; k < rc.size(); k+=2){
               Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
               mp.push_back(m);
@@ -749,7 +1007,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
             vector<int> cr = jc;
             mr.push_back(r+2);
             cr.push_back(c-2);
-            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
             for(int k = 0; k < rc.size(); k+=2){
               Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
               mp.push_back(m);
@@ -764,7 +1022,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
             vector<int> cr = jc;
             mr.push_back(r+2);
             cr.push_back(c-2);
-            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
             for(int k = 0; k < rc.size(); k+=2){
               Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
               mp.push_back(m);
@@ -782,7 +1040,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
             vector<int> cr = jc;
             mr.push_back(r-2);
             cr.push_back(c-2);
-            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
             for(int k = 0; k < rc.size(); k+=2){
               Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
               mp.push_back(m);
@@ -797,7 +1055,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
             vector<int> cr = jc;
             mr.push_back(r-2);
             cr.push_back(c+2);
-            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
             for(int k = 0; k < rc.size(); k+=2){
               Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
               mp.push_back(m);
@@ -812,7 +1070,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
             vector<int> cr = jc;
             mr.push_back(r-2);
             cr.push_back(c-2);
-            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
             for(int k = 0; k < rc.size(); k+=2){
               Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
               mp.push_back(m);
@@ -827,7 +1085,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
             vector<int> cr = jc;
             mr.push_back(r-2);
             cr.push_back(c+2);
-            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
             for(int k = 0; k < rc.size(); k+=2){
               Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
               mp.push_back(m);
@@ -845,7 +1103,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
             vector<int> cr = jc;
             mr.push_back(r-2);
             cr.push_back(c+2);
-            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
             for(int k = 0; k < rc.size(); k+=2){
               Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
               mp.push_back(m);
@@ -860,7 +1118,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
             vector<int> cr = jc;
             mr.push_back(r-2);
             cr.push_back(c+2);
-            vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+            vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
             for(int k = 0; k < rc.size(); k+=2){
               Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
               mp.push_back(m);
@@ -885,7 +1143,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                   Move *m = new Move(r,c,r,c,mr,cr);
                   mp.push_back(m);
                 } else{
-                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                   for(int k = 0; k < rc.size(); k+=2){
                     Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                     mp.push_back(m);
@@ -902,7 +1160,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                 vector<int> cr = jc;
                 mr.push_back(r-2);
                 cr.push_back(c+2);
-                vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                 for(int k = 0; k < rc.size(); k+=2){
                   Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                   mp.push_back(m);
@@ -921,7 +1179,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                 vector<int> cr = jc;
                 mr.push_back(r+2);
                 cr.push_back(c+2);
-                vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                 for(int k = 0; k < rc.size(); k+=2){
                   Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                   mp.push_back(m);
@@ -936,7 +1194,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                 vector<int> cr = jc;
                 mr.push_back(r-2);
                 cr.push_back(c+2);
-                vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                 for(int k = 0; k < rc.size(); k+=2){
                   Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                   mp.push_back(m);
@@ -952,7 +1210,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                 vector<int> cr = jc;
                 mr.push_back(r+2);
                 cr.push_back(c+2);
-                vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                 for(int k = 0; k < rc.size(); k+=2){
                   Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                   mp.push_back(m);
@@ -967,7 +1225,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                 vector<int> cr = jc;
                 mr.push_back(r-2);
                 cr.push_back(c+2);
-                vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                 for(int k = 0; k < rc.size(); k+=2){
                   Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                   mp.push_back(m);
@@ -993,7 +1251,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                 vector<int> cr = jc;
                 mr.push_back(r+2);
                 cr.push_back(c-2);
-                vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                 for(int k = 0; k < rc.size(); k+=2){
                   Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                   mp.push_back(m);
@@ -1014,7 +1272,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                   Move *m = new Move(r,c,r,c,mr,cr);
                   mp.push_back(m);
                 } else{
-                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                   for(int k = 0; k < rc.size(); k+=2){
                     Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                     mp.push_back(m);
@@ -1034,7 +1292,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                 vector<int> cr = jc;
                 mr.push_back(r+2);
                 cr.push_back(c-2);
-                vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                 for(int k = 0; k < rc.size(); k+=2){
                   Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                   mp.push_back(m);
@@ -1049,7 +1307,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                 vector<int> cr = jc;
                 mr.push_back(r-2);
                 cr.push_back(c-2);
-                vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                 for(int k = 0; k < rc.size(); k+=2){
                   Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                   mp.push_back(m);
@@ -1065,7 +1323,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                 vector<int> cr = jc;
                 mr.push_back(r+2);
                 cr.push_back(c-2);
-                vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                 for(int k = 0; k < rc.size(); k+=2){
                   Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                   mp.push_back(m);
@@ -1080,7 +1338,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                 vector<int> cr = jc;
                 mr.push_back(r-2);
                 cr.push_back(c-2);
-                vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                 for(int k = 0; k < rc.size(); k+=2){
                   Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                   mp.push_back(m);
@@ -1145,7 +1403,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                   vector<int> cr = jc;
                   mr.push_back(r+2);
                   cr.push_back(c-2);
-                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                   for(int k = 0; k < rc.size(); k+=2){
                     Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                     mp.push_back(m);
@@ -1168,7 +1426,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                   vector<int> cr = jc;
                   mr.push_back(r+2);
                   cr.push_back(c+2);
-                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                   for(int k = 0; k < rc.size(); k+=2){
                     Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                     mp.push_back(m);
@@ -1192,7 +1450,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                   vector<int> cr = jc;
                   mr.push_back(r-2);
                   cr.push_back(c-2);
-                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                   for(int k = 0; k < rc.size(); k+=2){
                     Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                     mp.push_back(m);
@@ -1215,7 +1473,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                   vector<int> cr = jc;
                   mr.push_back(r-2);
                   cr.push_back(c+2);
-                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                   for(int k = 0; k < rc.size(); k+=2){
                     Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                     mp.push_back(m);
@@ -1235,7 +1493,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                   vector<int> cr = jc;
                   mr.push_back(r+2);
                   cr.push_back(c-2);
-                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                   for(int k = 0; k < rc.size(); k+=2){
                     Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                     mp.push_back(m);
@@ -1250,7 +1508,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                   vector<int> cr = jc;
                   mr.push_back(r+2);
                   cr.push_back(c+2);
-                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                   for(int k = 0; k < rc.size(); k+=2){
                     Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                     mp.push_back(m);
@@ -1265,7 +1523,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                   vector<int> cr = jc;
                   mr.push_back(r-2);
                   cr.push_back(c-2);
-                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                   for(int k = 0; k < rc.size(); k+=2){
                     Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                     mp.push_back(m);
@@ -1280,7 +1538,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                   vector<int> cr = jc;
                   mr.push_back(r-2);
                   cr.push_back(c+2);
-                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                   for(int k = 0; k < rc.size(); k+=2){
                     Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                     mp.push_back(m);
@@ -1296,7 +1554,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                   vector<int> cr = jc;
                   mr.push_back(r+2);
                   cr.push_back(c-2);
-                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                   for(int k = 0; k < rc.size(); k+=2){
                     Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                     mp.push_back(m);
@@ -1311,7 +1569,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                   vector<int> cr = jc;
                   mr.push_back(r+2);
                   cr.push_back(c+2);
-                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                   for(int k = 0; k < rc.size(); k+=2){
                     Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                     mp.push_back(m);
@@ -1326,7 +1584,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                   vector<int> cr = jc;
                   mr.push_back(r-2);
                   cr.push_back(c-2);
-                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                   for(int k = 0; k < rc.size(); k+=2){
                     Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                     mp.push_back(m);
@@ -1341,7 +1599,7 @@ list <Move *> CheckerBoard::get_moves(list<Piece *> p1, list <Move *> mp, int p,
                   vector<int> cr = jc;
                   mr.push_back(r-2);
                   cr.push_back(c+2);
-                  vector<vector<int>> rc = check_jumps(*iter,mr,cr);
+                  vector<vector<int>> rc = check_jumps(*iter,mr,cr,sampleBoard);
                   for(int k = 0; k < rc.size(); k+=2){
                     Move *m = new Move(r, c, r + 1, c - 1, rc[k], rc[k+1]);
                     mp.push_back(m);
@@ -1688,7 +1946,7 @@ Piece * CheckerBoard::findPiece(int r, int c, list<Piece *> p){
 }
 
 
-void CheckerBoard::make_move(int m){
+int CheckerBoard::make_move(int m){
   if(m > 0 && m <= this->m1.size()){
     list<Move *>::iterator iter = this->m1.begin();
     advance(iter,m-1);
@@ -1731,8 +1989,10 @@ void CheckerBoard::make_move(int m){
         break;
       }
     }
+    return 0;
   } else{
     cout << "Invalid Option: Pick New Move\n";
+    return -1;
   }
 }
 
@@ -1741,7 +2001,7 @@ int CheckerBoard::print_moves(int p){
   vector<int> rows;
   vector<int> cols;
   Piece *pj = new Piece(0,0,0,0);
-  this->m1 = this->get_moves(this->p1, this->m1, p, rows, cols, pj);
+  this->m1 = this->get_moves(this->p1, p, rows, cols);
   cout << "Moves: " << this->m1.size() << endl;
   int z = 0;
   for(list<Move *>::iterator iter = this->m1.begin(); iter != this->m1.end(); iter++){
