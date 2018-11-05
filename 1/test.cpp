@@ -6,8 +6,8 @@
 #include <time.h>
 
 using namespace std;
-
-/*int board[8][8] = {
+/*
+int board[8][8] = {
   {0,1,0,1,0,1,0,1},
   {1,0,1,0,1,0,1,0},
   {0,1,0,1,0,1,0,1},
@@ -17,6 +17,7 @@ using namespace std;
   {0,2,0,2,0,2,0,2},
   {2,0,2,0,2,0,2,0}
 };*/
+
 
 int board[8][8] = {
   {0,3,0,4,0,0,0,0},
@@ -37,6 +38,7 @@ int game = 1;
 bool play = true;
 
 int main(){
+    srand (time(NULL));
   cout << "How Many Computers Are Playing (Options are 0,1,2; Default = 1)\n";
   getline (cin,num);
   comp = stoi(num,nullptr,0);
