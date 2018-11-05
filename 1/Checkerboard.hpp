@@ -23,8 +23,9 @@ class CheckerBoard {
     int make_move(int m);
     void updateBoard();
     void printBoard();
-    int AlphaBeta(int depth, int Alpha, int Beta, list <Move *> mi, list<Piece *> pi, int p, double timeRemaining, double startTime, double stoptime, int odepth);
-    int evaluate_move(list<Move *> mi, list<Piece *> pi);
+    void printTestBoard(list<Piece *> pk);
+    int AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, int p, double timeRemaining, double startTime, double stoptime, int odepth);
+    int evaluate_move(list<Piece *> pi);
     int evaluate_move2(list<Move *> mi, list<Piece *> pi);
     int ai_move(double timeRemaining, int p);
     list <Piece *> sample_move(int m, list <Move *> mn, list <Piece *> pn);

@@ -31,64 +31,111 @@ CheckerBoard::CheckerBoard(int load[8][8]){
   }
 }
 
-int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list <Move *> mi, list<Piece *> pi, int p, double timeRemaining, double startTime, double stoptime, int odepth){
+int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, int p, double timeRemaining, double startTime, double stoptime, int odepth){
   vector<int> mr;
   vector<int> mc;
-  Move *m = new Move(0,0,0,0,mr,mc);
-  if(depth == 0){
-    if(p == 2){
-      return -evaluate_move(mi, pi);
-    } else{
-      return evaluate_move(mi, pi);
+  int m1 = 0;
+  for(list<Piece *>::iterator iter2 = pi.begin(); iter2 != pi.end(); iter2++){
+    if((*iter2) ->player == p){
+      m1++;
     }
   }
-  //
+
+  if(depth == 0 || m1 == 0){
+    if(p == 2){
+      return evaluate_move(pi);
+    } else{
+      return -evaluate_move(pi);
+    }
+  }
+  //int q = 0;
   int p2 = 0;
+  list<Move*> mv = get_moves(pi, p, mr, mc);
   if(p == 1){
     p2 = 2;
   } else{
     p2 = 1;
   }
+  /*
+  if(p == 1){
+    p2 = 2;
+    for(int i = 0; i < mv.size(); i++){
+      list <Piece *> pk = sample_move(i,mv,pi);
+      clock_t t2 = clock();
+      int tmp = AlphaBeta(depth-1, Alpha, Beta, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth);
+      if(tmp < Beta){
+        aimove.clear();
+        aimove.push_back(i+1);
+        Beta = tmp;
+      }
+    }
+    return Beta;
+  } else{
+    p2 = 1;
+    for(int i = 0; i < mv.size(); i++){
+      list <Piece *> pk = sample_move(i,mv,pi);
+      clock_t t2 = clock();
+      int tmp = AlphaBeta(depth-1, Alpha, Beta, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth);
+      if(Alpha < tmp){
+        aimove.clear();
+        aimove.push_back(i+1);
+        Alpha = tmp;
+      }
+    }
+    clock_t t3 = clock();
+    if((((double)t3 - startTime)/(CLOCKS_PER_SEC)) < (0.5 * stoptime) && depth == odepth && mv.size() != 1){
+      int q = aimove[0];
+      cout << "Depth Reached: " << depth << endl;
+      Alpha = AlphaBeta(depth+1, Alpha, Beta,  pi, p, timeRemaining, startTime, stoptime, odepth+1);
+    }
+
+    return Alpha;
+  }*/
+
   int bestMove = 0;
   int returnedmove = 0;
-  list<Move*> mv = get_moves(pi, p, mr, mc);
   int oldAlpha = Alpha;
   int Score = -10000;
   int tmp;
   if(Score == (INT_MAX || -INT_MAX)){
     return INT_MAX;
   }
+  //cout << "Depth:" << depth << ", MOVES:" << mv.size() << endl;
   for(int i = 0; i < mv.size(); i++){
+    //cout << "MVSIZE:" << mv.size() << endl;
     list <Piece *> pk = sample_move(i,mv,pi);
     clock_t t2 = clock();
     if((((double)t2 - startTime)/(CLOCKS_PER_SEC)) > (0.9 * stoptime)){
       cout << "TimeLimit Reached: " << Beta << endl;;
       return INT_MAX;
     }
-    Score = -AlphaBeta(depth-1, -Beta,-Alpha, mv, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth);
+    Score = -AlphaBeta(depth-1, -Beta,-Alpha, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth);
     if(Score == (INT_MAX || -INT_MAX)){
       return INT_MAX;
     }
-    cout << "Depth: " << depth << " - > Score: " << Score << ", Time: " << ((double)t2 - startTime)/(CLOCKS_PER_SEC) << endl;
+    //cout << "Depth: " << depth << " - > Score: " << Score << ", Time: " << ((double)t2 - startTime)/(CLOCKS_PER_SEC) << endl;
+    if(Score >= Beta){
+      return Score;
+    }
+
     if(Score > Alpha){
-      if(Score >= Beta){
-        return Beta;
-      }
       Alpha = Score;
       tmp = i;
     }
   }
   //cout << "Alpha (" << depth << "): " << Alpha << endl;
-  if(oldAlpha != Alpha && Score != (INT_MAX || -INT_MAX)){
+  if(oldAlpha != Alpha){
     aimove.clear();
     aimove.push_back(tmp+1);
   }
   clock_t t3 = clock();
-  if((((double)t3 - startTime)/(CLOCKS_PER_SEC)) < (0.6 * stoptime) && depth == odepth && mi.size() != 1){
+  if((((double)t3 - startTime)/(CLOCKS_PER_SEC)) < (0.5 * stoptime) && depth == odepth && mv.size() != 1){
+    aimove.clear();
+    aimove.push_back(tmp+1);
     cout << "Depth Reached: " << depth << endl;
     int q = aimove[0];
-    //Score = AlphaBeta(depth+1, Alpha, Beta, mi, pi, p, timeRemaining, startTime, stoptime, odepth+1);
-    cout << "Depth: " << depth << ", Score = " << Score << ", Move: " << q << endl;
+    Score = AlphaBeta(depth+1, Alpha, Beta,  pi, p, timeRemaining, startTime, stoptime, odepth+1);
+    //cout << "Depth: " << depth << ", Score = " << Score << ", Move: " << q << endl;
     //cout << "Q = " << q << endl;
     if(Score = (INT_MAX || -INT_MAX)){
       aimove.clear();
@@ -101,15 +148,16 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list <Move *> mi, li
 int CheckerBoard::ai_move(double timeRemaining, int p){
   clock_t t1 = clock();
   //int moveval = minimax(0, 2, this->m1, this->p1);
-  int moveval = AlphaBeta(1,-10000,10000, this->m1, this->p1, p, timeRemaining, (double)t1, timeRemaining, 1);
+  int moveval = AlphaBeta(1,-100000,100000, this->p1, p, timeRemaining, (double)t1, timeRemaining, 1);
   clock_t t2 = clock();
-  //cout << moveval << endl;
+  cout << "Move Value: " << moveval << endl;
   double timeDiff = ((double) (t2 - t1)) / CLOCKS_PER_SEC;
   cout << "ALPHABETA TOOK " << timeDiff << " seconds\n";
   return aimove[0];
 }
 
-int CheckerBoard::evaluate_move(list<Move *> mi, list<Piece *> pi){
+int CheckerBoard::evaluate_move(list<Piece *> pi){
+  //printTestBoard(pi);
   int t = 0;
   int t2 = 0;
   int t3 = 0;
@@ -121,54 +169,62 @@ int CheckerBoard::evaluate_move(list<Move *> mi, list<Piece *> pi){
   int k1b = 0;
   int k2b = 0;
   for(list<Piece *>::iterator iter2 = this->p1.begin(); iter2 != this->p1.end(); iter2++){
+    //cout << "BPlayer: " << (*iter2)->player << ", Row: " << (*iter2)->row << ", Column:" << (*iter2)->col << endl;
     if((*iter2) ->player == 2){
       t3 += heuristicBoard[(*iter2)->row][(*iter2)->col];
       m2++;
       if((*iter2) ->type == 2){
+        //cout << "Before : KING2" << endl;
         k2a++;
       }
     }
     if((*iter2) ->player == 1){
       t4++;
       if((*iter2) ->type == 2){
+        //cout << "Before: KING1" << endl;
         k1a++;
       }
     }
 
   }
   for(list<Piece *>::iterator iter2 = pi.begin(); iter2 != pi.end(); iter2++){
+    //cout << "APlayer: " << (*iter2)->player << ", Row: " << (*iter2)->row << ", Column:" << (*iter2)->col << endl;
     if((*iter2) ->player == 2){
-      t += heuristicBoard[(*iter2)->row][(*iter2)->col];
+      //t += heuristicBoard[(*iter2)->row][(*iter2)->col];
       m1++;
       if((*iter2) ->type == 2){
+        //cout << "After : KING2" << endl;
         k2b++;
       }
     }
     if((*iter2) ->player == 1){
       t2++;
       if((*iter2) ->type == 2){
+        //cout << "After: KING1" << endl;
         k1b++;
       }
     }
   }
   if(t2 == 0){
-    t = 10000;
+    t = 5000;
   }
-  if(m1 == 0){
-    t = -10000;
-  }
+  else if(m1 == 0){
+    t = -5000;
+  }/*
   if((k2a-k2b) < 0){
     t+= (k2b-k2a)*100;
   } else{
     t+= (k2b-k2a)*200;
   }
+  //cout << t << endl;
   if((k1a-k1b) < 0){
     t+= (k1a-k1b)*200;
   } else{
     t+= (k1a-k1b)*75;
   }
   t-= ((m2-m1)*100);
-  t+= ((t4-t2)*100);
+  t+= ((t4-t2)*100);*/
+  //cout << t << endl;
   return t;
 }
 
@@ -232,7 +288,7 @@ list <Piece *> CheckerBoard::sample_move(int m, list <Move *> mn, list <Piece *>
   list <Move *> mx = mn;
   list <Piece *> px = pn;
     list<Move *>::iterator iter = mx.begin();
-    advance(iter,m-1);
+    advance(iter,m);
     for(list<Piece *>::iterator it = px.begin(); it != px.end(); it++){
       if((* it)->row == (* iter)->cur_row && (* it)->col == (* iter)->cur_col){
         //cout << ++k << endl;
@@ -248,7 +304,6 @@ list <Piece *> CheckerBoard::sample_move(int m, list <Move *> mn, list <Piece *>
               int dr = ((* iter)->mrow[k] - (* iter)->cur_row)/2;
               int dc = ((* iter)->mcol[k] - (* iter)->cur_col)/2;
               Piece* tmp = findPiece((* iter)->cur_row + dr, (* iter)->cur_col + dc,px);
-              //cout << "R" << (* iter)->cur_row + dr << ",C" << (* iter)->cur_col + dc << endl;
               px.remove(tmp);
             } else{
               int dr = ( (* iter)->mrow[k] - (* iter)->mrow[k-1] ) / 2;
@@ -273,6 +328,113 @@ list <Piece *> CheckerBoard::sample_move(int m, list <Move *> mn, list <Piece *>
       }
     }
     return px;
+}
+
+void CheckerBoard::printTestBoard(list<Piece *> pk){
+
+  int sampleBoard[8][8] = {0};
+
+  for(list<Piece *>::iterator iter = pk.begin(); iter != pk.end(); iter++){
+    if((* iter)->player == 1){
+      if((* iter)->type == 1){
+        sampleBoard[(* iter)->row][(* iter)->col] = 1;
+      } else{
+        sampleBoard[(* iter)->row][(* iter)->col] = 3;
+      }
+    } else{
+      if((* iter)->type == 1){
+        sampleBoard[(* iter)->row][(* iter)->col] = 2;
+      } else{
+        sampleBoard[(* iter)->row][(* iter)->col] = 4;
+      }
+    }
+  }
+
+  cout << "                                      C\n";
+  cout << "      0        1        2        3        4        5        6        7\n";
+  for(int i = 0; i < 8; i++){
+    if(i % 2 == 1){
+      for (int k = 0; k < 5; k++){
+        for(int j = 0; j < 8; j++){
+          if(k == 2){
+            if(j == 0){
+              cout << " " << i << " ";
+            }
+            if(sampleBoard[i][j] == 1){
+              printP1();
+            }
+            else if(sampleBoard[i][j] == 2){
+              printP2();
+            }
+            else if(sampleBoard[i][j] == 3){
+              printP1k();
+            }
+            else if(sampleBoard[i][j] == 4){
+              printP2k();
+            }
+            else if(j % 2 == 1){
+              printWhite();
+            }
+            else {
+              printBlack();
+            }
+          } else{
+            if(i == 3 && j == 0 && k == 4){
+              cout << "R  ";
+            } else if(j == 0){
+              cout << "   ";
+            }
+            if(j % 2 == 1){
+              printWhite();
+            }
+            else {
+              printBlack();
+            }
+          }
+        }
+        cout << endl;
+      }
+    } else{
+      for (int k = 0; k < 5; k++){
+        for(int j = 0; j < 8; j++){
+          if(k == 2){
+            if(j == 0){
+              cout << " " << i << " ";
+            }
+            if(sampleBoard[i][j] == 1){
+              printP1();
+            }
+            else if(sampleBoard[i][j] == 2){
+              printP2();
+            }
+            else if(sampleBoard[i][j] == 3){
+              printP1k();
+            }
+            else if(sampleBoard[i][j] == 4){
+              printP2k();
+            }
+            else if(j % 2 == 1){
+              printBlack();
+            }
+            else {
+              printWhite();
+            }
+          } else{
+            if(j == 0){
+              cout << "   ";
+            }
+            if(j % 2 == 1){
+              printBlack();
+            }
+            else {
+              printWhite();
+            }
+          }
+        }
+        cout << endl;
+      }
+    }
+  }
 }
 
 void CheckerBoard::printBlack(){
