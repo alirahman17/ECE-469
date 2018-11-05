@@ -7,7 +7,7 @@
 
 using namespace std;
 
-int board[8][8] = {
+/*int board[8][8] = {
   {0,1,0,1,0,1,0,1},
   {1,0,1,0,1,0,1,0},
   {0,1,0,1,0,1,0,1},
@@ -16,18 +16,18 @@ int board[8][8] = {
   {2,0,2,0,2,0,2,0},
   {0,2,0,2,0,2,0,2},
   {2,0,2,0,2,0,2,0}
-};
+};*/
 
-/*int board[8][8] = {
-  {0,3,0,0,0,0,0,0},
-  {0,0,2,0,4,0,0,0},
+int board[8][8] = {
+  {0,3,0,4,0,0,0,0},
   {0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0},
+  {0,1,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0}
-};*/
+};
 
 string option,num,tm;
 int comptime;
@@ -112,7 +112,7 @@ int main(){
           return 1;
         //srand (time(NULL));
         //int opt2 = rand() % k;
-        int opt2 = testBoard->ai_move((double)comptime);
+        int opt2 = testBoard->ai_move((double)comptime, 2);
         cout << "Computer Chose: " << opt2 << endl;
         z = testBoard->make_move(opt2);
         testBoard->printBoard();
@@ -127,7 +127,7 @@ int main(){
         k = testBoard->print_moves(1);
         if(k == 0)
           return 2;
-        int opt = testBoard->ai_move((double)comptime);
+        int opt = testBoard->ai_move((double)comptime, 1);
         cout << "Computer 1 Chose: " << opt << endl;
         z = testBoard->make_move(opt);
         testBoard->printBoard();
@@ -139,7 +139,7 @@ int main(){
         k = testBoard->print_moves(2);
         if(k == 0)
           return 1;
-        int opt2 = testBoard->ai_move((double)comptime);
+        int opt2 = testBoard->ai_move((double)comptime, 2);
         cout << "Computer Chose: " << opt2 << endl;
         z = testBoard->make_move(opt2);
         testBoard->printBoard();

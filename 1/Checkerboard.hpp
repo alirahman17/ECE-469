@@ -24,9 +24,9 @@ class CheckerBoard {
     void updateBoard();
     void printBoard();
     int AlphaBeta(int depth, int Alpha, int Beta, list <Move *> mi, list<Piece *> pi, int p, double timeRemaining, double startTime, double stoptime, int odepth);
-    list<int> evaluate_moves(list<Move *> mi);
     int evaluate_move(list<Move *> mi, list<Piece *> pi);
-    int ai_move(double timeRemaining);
+    int evaluate_move2(list<Move *> mi, list<Piece *> pi);
+    int ai_move(double timeRemaining, int p);
     list <Piece *> sample_move(int m, list <Move *> mn, list <Piece *> pn);
     int heuristicBoard[8][8] = {
       {0,4,0,4,0,4,0,4},

@@ -37,9 +37,9 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list <Move *> mi, li
   Move *m = new Move(0,0,0,0,mr,mc);
   if(depth == 0){
     if(p == 2){
-      return evaluate_move(mi, pi);
-    } else{
       return -evaluate_move(mi, pi);
+    } else{
+      return evaluate_move(mi, pi);
     }
   }
   //
@@ -55,6 +55,9 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list <Move *> mi, li
   int oldAlpha = Alpha;
   int Score = -10000;
   int tmp;
+  if(Score == (INT_MAX || -INT_MAX)){
+    return INT_MAX;
+  }
   for(int i = 0; i < mv.size(); i++){
     list <Piece *> pk = sample_move(i,mv,pi);
     clock_t t2 = clock();
@@ -66,7 +69,7 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list <Move *> mi, li
     if(Score == (INT_MAX || -INT_MAX)){
       return INT_MAX;
     }
-    //cout << "Depth: " << depth << " - > Score: " << Score << ", Time: " << ((double)t2 - startTime)/(CLOCKS_PER_SEC) << endl;
+    cout << "Depth: " << depth << " - > Score: " << Score << ", Time: " << ((double)t2 - startTime)/(CLOCKS_PER_SEC) << endl;
     if(Score > Alpha){
       if(Score >= Beta){
         return Beta;
@@ -82,16 +85,23 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list <Move *> mi, li
   }
   clock_t t3 = clock();
   if((((double)t3 - startTime)/(CLOCKS_PER_SEC)) < (0.6 * stoptime) && depth == odepth && mi.size() != 1){
-    cout << "Depth Reached" << depth << endl;
-    Score = AlphaBeta(depth+1, Alpha, Beta, mi, pi, p, timeRemaining, startTime, stoptime, odepth+1);
+    cout << "Depth Reached: " << depth << endl;
+    int q = aimove[0];
+    //Score = AlphaBeta(depth+1, Alpha, Beta, mi, pi, p, timeRemaining, startTime, stoptime, odepth+1);
+    cout << "Depth: " << depth << ", Score = " << Score << ", Move: " << q << endl;
+    //cout << "Q = " << q << endl;
+    if(Score = (INT_MAX || -INT_MAX)){
+      aimove.clear();
+      aimove.push_back(q);
+    }
   }
   return Alpha;
 }
 
-int CheckerBoard::ai_move(double timeRemaining){
+int CheckerBoard::ai_move(double timeRemaining, int p){
   clock_t t1 = clock();
   //int moveval = minimax(0, 2, this->m1, this->p1);
-  int moveval = AlphaBeta(1,-10000,10000, this->m1, this->p1, 2, timeRemaining, (double)t1, timeRemaining, 1);
+  int moveval = AlphaBeta(1,-10000,10000, this->m1, this->p1, p, timeRemaining, (double)t1, timeRemaining, 1);
   clock_t t2 = clock();
   //cout << moveval << endl;
   double timeDiff = ((double) (t2 - t1)) / CLOCKS_PER_SEC;
@@ -119,7 +129,7 @@ int CheckerBoard::evaluate_move(list<Move *> mi, list<Piece *> pi){
       }
     }
     if((*iter2) ->player == 1){
-      t4++;//t4 += heuristicBoard[(*iter2)->row][(*iter2)->row];
+      t4++;
       if((*iter2) ->type == 2){
         k1a++;
       }
@@ -135,7 +145,7 @@ int CheckerBoard::evaluate_move(list<Move *> mi, list<Piece *> pi){
       }
     }
     if((*iter2) ->player == 1){
-      t2++;//t2 += heuristicBoard[(*iter2)->row][(*iter2)->row];
+      t2++;
       if((*iter2) ->type == 2){
         k1b++;
       }
@@ -147,78 +157,75 @@ int CheckerBoard::evaluate_move(list<Move *> mi, list<Piece *> pi){
   if(m1 == 0){
     t = -10000;
   }
-  //t += ((t4 - t2) * 5);
-  //t -= (5 * (m2 - m1));
+  if((k2a-k2b) < 0){
+    t+= (k2b-k2a)*100;
+  } else{
+    t+= (k2b-k2a)*200;
+  }
+  if((k1a-k1b) < 0){
+    t+= (k1a-k1b)*200;
+  } else{
+    t+= (k1a-k1b)*75;
+  }
+  t-= ((m2-m1)*100);
+  t+= ((t4-t2)*100);
+  return t;
+}
+
+int CheckerBoard::evaluate_move2(list<Move *> mi, list<Piece *> pi){
+  int t = 0;
+  int t2 = 0;
+  int t3 = 0;
+  int t4 = 0;
+  int m1 = 0;
+  int m2 = 0;
+  int k1a = 0;
+  int k2a = 0;
+  int k1b = 0;
+  int k2b = 0;
+  for(list<Piece *>::iterator iter2 = this->p1.begin(); iter2 != this->p1.end(); iter2++){
+    if((*iter2) ->player == 2){
+      //t3 += heuristicBoard[(*iter2)->row][(*iter2)->col];
+      m2++;
+      if((*iter2) ->type == 2){
+        k2a++;
+      }
+    }
+    if((*iter2) ->player == 1){
+      t4++;
+      if((*iter2) ->type == 2){
+        k1a++;
+      }
+    }
+
+  }
+  for(list<Piece *>::iterator iter2 = pi.begin(); iter2 != pi.end(); iter2++){
+    if((*iter2)->player == 2){
+      t += heuristicBoard[(*iter2)->row][(*iter2)->col];
+      m1++;
+      if((*iter2)->type == 2){
+        k2b++;
+      }
+    }
+    if((*iter2)->player == 1){
+      t2++;
+      if((*iter2)->type == 2){
+        k1b++;
+      }
+    }
+  }
+  if(t2 == 0){
+    t = 10000;
+  }
+  if(m1 == 0){
+    t = -10000;
+  }
   t-= ((m2-m1)*50);
   t-= ((k2a-k2b)*50);
   t-= ((k1b-k1a)*50);
   t-= ((t2-t4)*50);
-  //t+= ((m1-m2)*5) + ((k2b-k2a)*5) - ((k1b-k1a)*5) + ((t4-t2)*5);
+  t-= t3 / 2;
   return t;
-
-
-  /*list <int> moveval;
-
-  int i = 0;
-  for(list<Move *>::iterator iter = mi.begin(); iter != mi.end(); iter++){
-    int t = 0;
-    int t2 = 0;
-    int t3 = 0;
-    int t4 = 0;
-    int m1 = 0;
-    int m2 = 0;
-    list <Piece *> pk = sample_move(i, mi, pi);
-    for(list<Piece *>::iterator iter2 = this->p1.begin(); iter2 != this->p1.end(); iter2++){
-      if((*iter2) ->player == 2)
-        m2++;
-    }
-    for(list<Piece *>::iterator iter2 = pi.begin(); iter2 != pi.end(); iter2++){
-      if((*iter2) ->player == 2){
-        t3 += heuristicBoard[(*iter2)->row][(*iter2)->col];
-        //m2++;
-      }
-      if((*iter2) ->player == 1)
-        t4++;//t4 += heuristicBoard[(*iter2)->row][(*iter2)->row];
-    }
-    for(list<Piece *>::iterator iter2 = pk.begin(); iter2 != pk.end(); iter2++){
-      if((*iter2) ->player == 2){
-        t += heuristicBoard[(*iter2)->row][(*iter2)->col];
-        m1++;
-      }
-      if((*iter2) ->player == 1)
-        t2++;//t2 += heuristicBoard[(*iter2)->row][(*iter2)->row];
-    }
-    t += ((t4 - t2) * 5);
-    t -= (10 * (m2 - m1));
-    moveval.push_back(t);
-    i++;
-  }
-  int max = 0;
-  int k = 0;
-  int movevalue;
-  for(list<int>::iterator iter3 = moveval.begin(); iter3 != moveval.end(); iter3++){
-    k++;
-    if(max < (*iter3)){
-      movevalue = k;
-      max = *iter3;
-    }
-  }
-  //cout << "Move: " << movevalue << endl;
-  return movevalue;*/
-}
-
-list <int> CheckerBoard::evaluate_moves(list<Move *> mi){
-  list <int> moveval;
-  for(list<Move *>::iterator iter = mi.begin(); iter != mi.end(); iter++){
-    int t = heuristicBoard[(*iter)->mrow[(*iter)->mrow.size()-1]][(*iter)->mcol[(*iter)->mcol.size()-1]];
-    if(abs((*iter)->mrow[0] - (*iter)->cur_row) == 1){
-      //No Jumps
-    } else{
-      t += ((*iter)->mrow.size()) * 5;
-    }
-    moveval.push_back(t);
-  }
-  return moveval;
 }
 
 list <Piece *> CheckerBoard::sample_move(int m, list <Move *> mn, list <Piece *> pn){
