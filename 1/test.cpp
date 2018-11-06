@@ -6,7 +6,7 @@
 #include <time.h>
 
 using namespace std;
-/*
+
 int board[8][8] = {
   {0,1,0,1,0,1,0,1},
   {1,0,1,0,1,0,1,0},
@@ -16,9 +16,9 @@ int board[8][8] = {
   {2,0,2,0,2,0,2,0},
   {0,2,0,2,0,2,0,2},
   {2,0,2,0,2,0,2,0}
-};*/
+};
 
-
+/*
 int board[8][8] = {
   {0,3,0,4,0,0,0,0},
   {0,0,0,0,0,0,0,0},
@@ -28,7 +28,7 @@ int board[8][8] = {
   {0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0},
   {0,0,0,0,0,0,0,0}
-};
+};*/
 
 string option,num,tm;
 int comptime;
@@ -38,7 +38,7 @@ int game = 1;
 bool play = true;
 
 int main(){
-    srand (time(NULL));
+  srand (time(NULL));
   cout << "How Many Computers Are Playing (Options are 0,1,2; Default = 1)\n";
   getline (cin,num);
   comp = stoi(num,nullptr,0);
@@ -129,7 +129,8 @@ int main(){
         k = testBoard->print_moves(1);
         if(k == 0)
           return 2;
-        int opt = testBoard->ai_move((double)comptime, 1);
+        //int opt = testBoard->ai_move((double)comptime, 1);
+        int opt = rand() % k + 1;
         cout << "Computer 1 Chose: " << opt << endl;
         z = testBoard->make_move(opt);
         testBoard->printBoard();

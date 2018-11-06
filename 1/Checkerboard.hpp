@@ -12,9 +12,7 @@ class CheckerBoard {
     CheckerBoard(int load[8][8]);
     int board[8][8];
     list<Move *> m1;
-    list<Move *> m2;
     list<Piece *> p1;
-    list<Piece *> p2;
     list<Move *> get_moves(list<Piece *> p1, int p, vector<int> jr, vector<int> jc);
     vector<vector<int>> check_jumps(Piece* pj, vector<int> jr, vector<int> jc, int tboard[8][8]);
     vector<int> aimove;
@@ -37,7 +35,7 @@ class CheckerBoard {
       {0,3,0,1,0,2,0,4},
       {4,0,2,0,1,0,3,0},
       {0,3,0,2,0,2,0,4},
-      {4,0,4,0,4,0,4,0}
+      {8,0,8,0,8,0,8,0}
     };
 
   private:

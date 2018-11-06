@@ -12,6 +12,10 @@
 
 using namespace std;
 
+static int  fg_c = 9;
+static int  bg_c = 9;
+#define set_colors( fg, bg ) cout << "\33[3" << (fg_c = fg) << ";4" << (bg_c = bg) << "m"
+
 CheckerBoard::CheckerBoard(int load[8][8]){
   for(int i = 0; i < 8; i++){
     for(int j = 0; j < 8; j++){
@@ -45,9 +49,9 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, in
   vector<int> mc;
   if(depth == 0 || m1 == 0){
     if(p == 2){
-      return evaluate_move(pi);
-    } else{
       return -evaluate_move(pi);
+    } else{
+      return evaluate_move(pi);
     }
   }
   //int q = 0;
@@ -57,8 +61,10 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, in
   mr.clear();
   mc.clear();
   int x = 1;
-  if(mv.size() != 0){
-    x = (rand() % mv.size());
+  if(mv.size() == 1 && depth == odepth){
+    aimove.clear();
+    aimove.push_back(1);
+    return Alpha;
   }
   if(p == 1){
     p2 = 2;
@@ -85,9 +91,10 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, in
         Beta = tmp;
       }
       if(Beta <= Alpha){
+        //x = i+1;
         break;
-      }
-      /*if(Beta > best){
+      }/*
+      if(Beta > best){
         x = i+1;
         Beta = best;
       }
@@ -117,6 +124,7 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, in
         Alpha = tmp;
       }
       if(Beta <= Alpha){
+        //x = i+1;
         break;
       }
       /*if(Alpha < best){
@@ -202,7 +210,7 @@ int CheckerBoard::ai_move(double timeRemaining, int p){
   int n = 1;
   int moveval = 0;
   //int moveval = minimax(0, 2, this->m1, this->p1);
-  while((((double)t2 - startTime)/(CLOCKS_PER_SEC)) < (0.5 * timeRemaining) || n == 1){
+  while(((((double)t2 - startTime)/(CLOCKS_PER_SEC)) < (0.5 * timeRemaining) || n == 1)){
     moveval = AlphaBeta(n,-500000,500000, this->p1, p, timeRemaining, (double)startTime, timeRemaining, n);
     t2 = clock();
     n++;
@@ -247,7 +255,7 @@ int CheckerBoard::evaluate_move(list<Piece *> pi){
   for(list<Piece *>::iterator iter2 = pi.begin(); iter2 != pi.end(); iter2++){
     //cout << "APlayer: " << (*iter2)->player << ", Row: " << (*iter2)->row << ", Column:" << (*iter2)->col << endl;
     if((*iter2) ->player == 2){
-      //t += heuristicBoard[(*iter2)->row][(*iter2)->col];
+      t += heuristicBoard[(*iter2)->row][(*iter2)->col];
       m1++;
       if((*iter2) ->type == 2){
         //cout << "After : KING2" << endl;
@@ -526,8 +534,10 @@ void CheckerBoard::printP2(){
 void CheckerBoard::printP1k(){
   cout << "\33[3" << 0 << ";4" << 0 << "m";
   cout << 219;
-  cout << "\33[3" << 0 << ";4" << 1 << "m";
-  cout << " K ";
+  cout << "\33[3" << 7 << ";4" << 1 << "m";
+  cout << "\33[1m";
+  cout << " O ";
+  cout << "\33[0m";
   cout << "\33[3" << 0 << ";4" << 0 << "m";
   cout << 219;
   cout << "\33[3" << 9 << ";4" << 9 << "m";
@@ -536,8 +546,8 @@ void CheckerBoard::printP1k(){
 void CheckerBoard::printP2k(){
   cout << "\33[3" << 0 << ";4" << 0 << "m";
   cout << 219;
-  cout << "\33[3" << 0 << ";4" << 7 << "m";
-  cout << " K ";
+  cout << "\33[3" << 4 << ";4" << 7 << "m";
+  cout << " O ";
   cout << "\33[3" << 0 << ";4" << 0 << "m";
   cout << 219;
   cout << "\33[3" << 9 << ";4" << 9 << "m";
@@ -2230,9 +2240,43 @@ int CheckerBoard::print_moves(int p){
   int z = 0;
   for(list<Move *>::iterator iter = this->m1.begin(); iter != this->m1.end(); iter++){
     cout << "Option " << ++z;
-    cout << ": R" << (* iter)->cur_row << ",C" << (* iter)->cur_col;
+    string s1;
+if((* iter)->cur_col == 1)
+      s1 = "B";
+    else if((* iter)->cur_col == 2)
+      s1 = "C";
+    else if((* iter)->cur_col == 3)
+      s1 = "D";
+    else if((* iter)->cur_col == 4)
+      s1 = "E";
+    else if((* iter)->cur_col == 5)
+      s1 = "F";
+    else if((* iter)->cur_col == 6)
+      s1 = "G";
+    else if((* iter)->cur_col == 7)
+      s1 = "H";
+    else
+      s1 = "A";
+    cout << ": " << s1 << (* iter)->cur_row + 1;
     for(int k = 0; k < (* iter)->mrow.size(); k++){
-      cout << " -> R" << (* iter)->mrow[k] << ",C" << (* iter)->mcol[k];
+      string s2;
+      if((* iter)->mcol[k] == 1)
+        s2 = "B";
+      else if((* iter)->mcol[k] == 2)
+        s2 = "C";
+      else if((* iter)->mcol[k] == 3)
+        s2 = "D";
+      else if((* iter)->mcol[k] == 4)
+        s2 = "E";
+      else if((* iter)->mcol[k] == 5)
+        s2 = "F";
+      else if((* iter)->mcol[k] == 6)
+        s2 = "G";
+      else if((* iter)->mcol[k] == 7)
+        s2 = "H";
+      else
+        s2 = "A";
+      cout << " -> " << s2 << (* iter)->mrow[k]+1;
     }
     cout << endl;
   }
@@ -2264,15 +2308,25 @@ void CheckerBoard::updateBoard(){
 
 void CheckerBoard::printBoard(){
   updateBoard();
-  cout << "                                      C\n";
-  cout << "      0        1        2        3        4        5        6        7\n";
+  cout << "                                       Col\n";
+  set_colors(6 , 9 );
+  cout << "\33[1m";
+  cout << "        A        B        C        D        E        F        G        H\n";
+  set_colors(9 , 9 );
+  cout << "   __________________________________________________________________________\n";
+  cout << "\33[0m";
   for(int i = 0; i < 8; i++){
     if(i % 2 == 1){
       for (int k = 0; k < 5; k++){
         for(int j = 0; j < 8; j++){
           if(k == 2){
             if(j == 0){
-              cout << " " << i << " ";
+              set_colors(6 , 9);
+              cout << "\33[1m";
+              cout << " " << i+1;
+              set_colors(9 , 9);
+              cout << " |";
+              cout << "\33[0m";
             }
             if(board[i][j] == 1){
               printP1();
@@ -2288,18 +2342,32 @@ void CheckerBoard::printBoard(){
             }
             else if(j % 2 == 1){
               printWhite();
+              if(j == 7){
+                cout << "\33[1m";
+                cout << "|";
+                cout << "\33[0m";
+              }
             }
             else {
               printBlack();
             }
           } else{
             if(i == 3 && j == 0 && k == 4){
-              cout << "R  ";
+              cout << "\33[1m";
+              cout << "R  |";
+              cout << "\33[0m";
             } else if(j == 0){
-              cout << "   ";
+              cout << "\33[1m";
+              cout << "   |";
+              cout << "\33[0m";
             }
             if(j % 2 == 1){
               printWhite();
+              if(j == 7){
+                cout << "\33[1m";
+                cout << "|";
+                cout << "\33[0m";
+              }
             }
             else {
               printBlack();
@@ -2313,32 +2381,69 @@ void CheckerBoard::printBoard(){
         for(int j = 0; j < 8; j++){
           if(k == 2){
             if(j == 0){
-              cout << " " << i << " ";
+              set_colors(6 , 9 );
+              cout << "\33[1m";
+              cout << " " << i+1;
+              set_colors(9 , 9 );
+              cout << " |";
+              cout << "\33[0m";
             }
             if(board[i][j] == 1){
               printP1();
+              if(j == 7){
+                cout << "\33[1m";
+                cout << "|";
+                cout << "\33[0m";
+              }
             }
             else if(board[i][j] == 2){
               printP2();
+              if(j == 7){
+                cout << "\33[1m";
+                cout << "|";
+                cout << "\33[0m";
+              }
             }
             else if(board[i][j] == 3){
               printP1k();
+              if(j == 7){
+                cout << "\33[1m";
+                cout << "|";
+                cout << "\33[0m";
+              }
             }
             else if(board[i][j] == 4){
               printP2k();
+              if(j == 7){
+                cout << "\33[1m";
+                cout << "|";
+                cout << "\33[0m";
+              }
             }
             else if(j % 2 == 1){
               printBlack();
+              if(j == 7){
+                cout << "\33[1m";
+                cout << "|";
+                cout << "\33[0m";
+              }
             }
             else {
               printWhite();
             }
           } else{
             if(j == 0){
-              cout << "   ";
+              cout << "\33[1m";
+              cout << "   |";
+              cout << "\33[0m";
             }
             if(j % 2 == 1){
               printBlack();
+              if(j == 7){
+                cout << "\33[1m";
+                cout << "|";
+                cout << "\33[0m";
+              }
             }
             else {
               printWhite();
@@ -2349,4 +2454,8 @@ void CheckerBoard::printBoard(){
       }
     }
   }
+  cout << "\33[1m";
+  cout << "   __________________________________________________________________________\n";
+  cout << "\33[0m";
+  set_colors(9 , 9 );
 }
