@@ -1,5 +1,5 @@
 Game.exe: Game.o Checkerboard.o Piece.o Move.o
-	g++ -o a.exe Game.o Checkerboard.o Piece.o Move.o
+	g++ -o Game.exe Game.o Checkerboard.o Piece.o Move.o
 
 Move.o: Move.cpp Move.hpp
 	g++ -c Move.cpp
