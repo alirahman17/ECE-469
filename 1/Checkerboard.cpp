@@ -78,8 +78,13 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, in
       list <Piece *> pk = sample_move(i,mv,pi);
       clock_t t2 = clock();
       if(((double)t2 - startTime)/(CLOCKS_PER_SEC) > 0.8*(stoptime)){
+        cout << "TIME LIMIT\n";
+        return INT_MAX;
       }
       int tmp = AlphaBeta(depth-1, Alpha, Beta, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth);
+      if(tmp == INT_MAX){
+        return INT_MAX;
+      }
       if(Beta > tmp){
         x = i+1;
         Beta = tmp;
@@ -88,32 +93,36 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, in
         break;
       }
     }
-    clock_t t3 = clock();
     if(depth == odepth){
-
+      aimove.clear();
+      aimove.push_back(x);
     }
-    aimove.clear();
-    aimove.push_back(x);
     return Beta;
   } else{
     p2 = 1;
     for(int i = 0; i < mv.size(); i++){
       list <Piece *> pk = sample_move(i,mv,pi);
       clock_t t2 = clock();
+      if(((double)t2 - startTime)/(CLOCKS_PER_SEC) > 0.8*(stoptime)){
+        cout << "TIME LIMIT\n";
+        return INT_MAX;
+      }
       int tmp = AlphaBeta(depth-1, Alpha, Beta, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth);
+      if(tmp == INT_MAX){
+        return INT_MAX;
+      }
       if(Alpha < tmp){
         x = i+1;
-
         Alpha = tmp;
       }
       if(Beta <= Alpha){
         break;
       }
     }
-    clock_t t3 = clock();
-
-    aimove.clear();
-    aimove.push_back(x);
+    if(depth == odepth){
+      aimove.clear();
+      aimove.push_back(x);
+    }
     return Alpha;
   }
 
@@ -129,14 +138,13 @@ int CheckerBoard::ai_move(double timeRemaining, int p){
   if(mv.size() == 0){
     return 0;
   }
-  while((((((double)t2 - startTime)/(CLOCKS_PER_SEC)) < (0.5 * timeRemaining) || n == 1 )&& n < 35)){
+  while((((((double)t2 - startTime)/(CLOCKS_PER_SEC)) < (0.7 * timeRemaining) || n == 1 ) && n < 35)){
     moveval = AlphaBeta(n,-500000,500000, this->p1, p, timeRemaining, (double)startTime, timeRemaining, n);
     t2 = clock();
     n++;
   }
-  cout << "Move Value: " << moveval << endl;
   double timeDiff = ((double) (t2 - startTime)) / CLOCKS_PER_SEC;
-  cout << "ALPHABETA TOOK " << timeDiff << " seconds\n";
+  cout << "Computer Took " << timeDiff << " seconds\n";
   return aimove[0];
 }
 
@@ -199,61 +207,6 @@ int CheckerBoard::evaluate_move(list<Piece *> pi){
   t-= ((m2-m1)*100);
   t+= ((t4-t2)*75);
 
-  return t;
-}
-
-int CheckerBoard::evaluate_move2(list<Move *> mi, list<Piece *> pi){
-  int t = 0;
-  int t2 = 0;
-  int t3 = 0;
-  int t4 = 0;
-  int m1 = 0;
-  int m2 = 0;
-  int k1a = 0;
-  int k2a = 0;
-  int k1b = 0;
-  int k2b = 0;
-  for(list<Piece *>::iterator iter2 = this->p1.begin(); iter2 != this->p1.end(); iter2++){
-    if((*iter2) ->player == 2){
-      m2++;
-      if((*iter2) ->type == 2){
-        k2a++;
-      }
-    }
-    if((*iter2) ->player == 1){
-      t4++;
-      if((*iter2) ->type == 2){
-        k1a++;
-      }
-    }
-
-  }
-  for(list<Piece *>::iterator iter2 = pi.begin(); iter2 != pi.end(); iter2++){
-    if((*iter2)->player == 2){
-      t += heuristicBoard[(*iter2)->row][(*iter2)->col];
-      m1++;
-      if((*iter2)->type == 2){
-        k2b++;
-      }
-    }
-    if((*iter2)->player == 1){
-      t2++;
-      if((*iter2)->type == 2){
-        k1b++;
-      }
-    }
-  }
-  if(t2 == 0){
-    t = 10000;
-  }
-  if(m1 == 0){
-    t = -10000;
-  }
-  t-= ((m2-m1)*50);
-  t-= ((k2a-k2b)*50);
-  t-= ((k1b-k1a)*50);
-  t-= ((t2-t4)*50);
-  t-= t3 / 2;
   return t;
 }
 
