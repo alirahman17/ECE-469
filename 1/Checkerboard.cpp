@@ -37,14 +37,14 @@ CheckerBoard::CheckerBoard(int load[8][8]){
   }
 }
 
-int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, int p, double timeRemaining, double startTime, double stoptime, int odepth){
+int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, int p, double timeRemaining, double startTime, double stoptime, int odepth, time_t tm1){
   int m1 = 0;
   for(list<Piece *>::iterator iter2 = pi.begin(); iter2 != pi.end(); iter2++){
     if((*iter2) ->player == 2){
       m1++;
     }
   }
-
+  vector <int> rando;
   vector<int> mr;
   vector<int> mc;
   if(depth == 0 || m1 == 0){
@@ -70,17 +70,24 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, in
     for(int i = 0; i < mv.size(); i++){
       list <Piece *> pk = sample_move(i,mv,pi);
       clock_t t2 = clock();
+      time_t tm2 = time(0);
       if(((double)t2 - startTime)/(CLOCKS_PER_SEC) > 0.8*(stoptime)){
-        //cout << "TIME LIMIT\n";
+        double q = difftime(tm2,tm1);
+        //cout << "Computer Took: " << q << "second(s) Calendar Time" << endl;
         return INT_MAX;
       }
-      int tmp = AlphaBeta(depth-1, Alpha, Beta, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth);
+      int tmp = AlphaBeta(depth-1, Alpha, Beta, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth, tm1);
       if(tmp == INT_MAX){
         return INT_MAX;
       }
       if(Beta > tmp){
         x = i+1;
+        rando.clear();
+        rando.push_back(x);
         Beta = tmp;
+      }
+      if(Beta == tmp){
+        rando.push_back(i+1);
       }
       if(Beta <= Alpha){
         break;
@@ -88,7 +95,8 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, in
     }
     if(depth == odepth){
       aimove.clear();
-      aimove.push_back(x);
+      int y = rand() % rando.size();
+      aimove.push_back(rando[y]);
     }
     return Beta;
   } else{
@@ -96,17 +104,25 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, in
     for(int i = 0; i < mv.size(); i++){
       list <Piece *> pk = sample_move(i,mv,pi);
       clock_t t2 = clock();
+      time_t tm2 = time(0);
       if(((double)t2 - startTime)/(CLOCKS_PER_SEC) > 0.8*(stoptime)){
+        double q = (double)difftime(tm2,tm1);
+        //cout << "Computer Took: " << q << "second(s) Calendar Time" << endl;
         //cout << "TIME LIMIT\n";
         return INT_MAX;
       }
-      int tmp = AlphaBeta(depth-1, Alpha, Beta, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth);
+      int tmp = AlphaBeta(depth-1, Alpha, Beta, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth, tm1);
       if(tmp == INT_MAX){
         return INT_MAX;
       }
       if(Alpha < tmp){
         x = i+1;
+        rando.clear();
+        rando.push_back(x);
         Alpha = tmp;
+      }
+      if(Beta == tmp){
+        rando.push_back(i+1);
       }
       if(Beta <= Alpha){
         break;
@@ -114,7 +130,8 @@ int CheckerBoard::AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, in
     }
     if(depth == odepth){
       aimove.clear();
-      aimove.push_back(x);
+      int y = rand() % rando.size();
+      aimove.push_back(rando[y]);
     }
     return Alpha;
   }
@@ -156,10 +173,9 @@ int CheckerBoard::AlphaBeta2(int depth, int Alpha, int Beta, list<Piece *> pi, i
       list <Piece *> pk = sample_move(i,mv,pi);
       clock_t t2 = clock();
       if(((double)t2 - startTime)/(CLOCKS_PER_SEC) > 0.8*(stoptime)){
-        //cout << "TIME LIMIT\n";
         return INT_MAX;
       }
-      int tmp = AlphaBeta(depth-1, Alpha, Beta, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth);
+      int tmp = AlphaBeta2(depth-1, Alpha, Beta, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth);
       if(tmp == INT_MAX){
         return INT_MAX;
       }
@@ -185,7 +201,7 @@ int CheckerBoard::AlphaBeta2(int depth, int Alpha, int Beta, list<Piece *> pi, i
         //cout << "TIME LIMIT\n";
         return INT_MAX;
       }
-      int tmp = AlphaBeta(depth-1, Alpha, Beta, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth);
+      int tmp = AlphaBeta2(depth-1, Alpha, Beta, pk, p2, ((double)t2 - startTime)/(CLOCKS_PER_SEC), startTime, stoptime, odepth);
       if(tmp == INT_MAX){
         return INT_MAX;
       }
@@ -210,6 +226,8 @@ int CheckerBoard::AlphaBeta2(int depth, int Alpha, int Beta, list<Piece *> pi, i
 
 int CheckerBoard::ai_move(double timeRemaining, int p){
   clock_t startTime = clock();
+  time_t tm1 = time(0);
+  time_t tm2;
   clock_t t2;
   int n = 1;
   int moveval = 0;
@@ -220,20 +238,28 @@ int CheckerBoard::ai_move(double timeRemaining, int p){
   }
   if(p == 2){
     while((((((double)t2 - startTime)/(CLOCKS_PER_SEC)) < (0.7 * timeRemaining) || n == 1 ) && n < 35)){
-      moveval = AlphaBeta(n,-500000,500000, this->p1, p, timeRemaining, (double)startTime, timeRemaining, n);
+      moveval = AlphaBeta(n,-500000,500000, this->p1, p, timeRemaining, (double)startTime, timeRemaining, n, tm1);
       t2 = clock();
+      tm2 = time(0);
       n++;
+      if(moveval == 8000){
+        // Win
+        break;
+      }
     }
   } else{
     while((((((double)t2 - startTime)/(CLOCKS_PER_SEC)) < (0.7 * timeRemaining) || n == 1 ) && n < 35)){
       moveval = AlphaBeta2(n,-500000,500000, this->p1, p, timeRemaining, (double)startTime, timeRemaining, n);
       t2 = clock();
+      tm2 = time(0);
       n++;
     }
   }
 
+  double q = difftime(tm2,tm1);
+  cout << "Computer Took: " << q << " second(s) Calendar Time" << endl;
   double timeDiff = ((double) (t2 - startTime)) / CLOCKS_PER_SEC;
-  cout << "Computer Took " << timeDiff << " seconds and reached Depth " << n << endl;
+  cout << "Computer Took " << timeDiff << " second(s) CPU Time and reached Depth " << n << endl;
   return aimove[0];
 }
 

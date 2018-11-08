@@ -22,7 +22,7 @@ class CheckerBoard {
     void updateBoard();
     void printBoard();
     void printTestBoard(list<Piece *> pk);
-    int AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, int p, double timeRemaining, double startTime, double stoptime, int odepth);
+    int AlphaBeta(int depth, int Alpha, int Beta, list<Piece *> pi, int p, double timeRemaining, double startTime, double stoptime, int odepth, time_t tm1);
     int AlphaBeta2(int depth, int Alpha, int Beta, list<Piece *> pi, int p, double timeRemaining, double startTime, double stoptime, int odepth);
     int evaluate_move(list<Piece *> pi);
     int ai_move(double timeRemaining, int p);
