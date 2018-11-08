@@ -264,6 +264,8 @@ int CheckerBoard::evaluate_move(list<Piece *> pi){
     }
 
   }
+
+
   for(list<Piece *>::iterator iter2 = pi.begin(); iter2 != pi.end(); iter2++){
     if((*iter2) ->player == 2){
       t += heuristicBoard[(*iter2)->row][(*iter2)->col];
@@ -279,8 +281,56 @@ int CheckerBoard::evaluate_move(list<Piece *> pi){
       }
     }
   }
+  /*
+  if(k2a == 2 && k1a == 1){
+    //2 Kings Advantage
+    t = 0;
+    int r = 0;
+    int c = 0;
+    for(list<Piece *>::iterator iter2 = this->p1.begin(); iter2 != this->p1.end(); iter2++){
+      if((*iter2) ->player == 1){
+        r = (*iter2) ->row;
+        c = (*iter2) ->col;
+      }
+    }
+    if(r == 6 && c == 7){
+      //H7
+      for(list<Piece *>::iterator iter2 = this->p1.begin(); iter2 != this->p1.end(); iter2++){
+        if((*iter2) ->player == 2){
+          if((*iter2) ->row == 6 && (*iter2) ->col == 5){
+            t+=1500;
+          }
+          if(((*iter2) ->row == 6 && (*iter2) ->col == 3) || ((*iter2) ->row == 4 && (*iter2) ->col == 5)){
+            t+=1500;
+          }
+        }
+      }
+    }
+    if(r == 7 && c == 6){
+      //G8
+      for(list<Piece *>::iterator iter2 = this->p1.begin(); iter2 != this->p1.end(); iter2++){
+        if((*iter2) ->player == 2){
+          if((*iter2) ->row == 5 && (*iter2) ->col == 6){
+            t+=1500;
+          }
+          if(((*iter2) ->row == 5 && (*iter2) ->col == 4) || ((*iter2) ->row == 3 && (*iter2) ->col == 6)){
+            t+=1500;
+          }
+        }
+      }
+    }
+    if(r == 0 && c == 1){
+      //B1
+    }
+    if(r == 1 && c == 0){
+      //A2
+    }
+  }*/
   if(m1 == 0){
     t = -5000;
+  }
+  if(t4 == 0){
+    t = 8000;
   }
 
   if((k2a-k2b) < 0){
