@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "neuralNet.hpp"
 
 using namespace std;
 
@@ -47,6 +48,8 @@ int main(){
     return(-1);
   }
 
+  NeuralNet network;
+  network.networkTrain(initfile, trainfile, outfile, epoch, learnRate);
 
   return 0;
 }
