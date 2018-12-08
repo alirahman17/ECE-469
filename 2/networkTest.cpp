@@ -1,28 +1,29 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "neuralNet.hpp"
 
 using namespace std;
 
 int main(){
 
-  string network, outputfile, test;
+  string netNeural, outputfile, test;
   ifstream netfile, testfile;
   ofstream reportfile;
 
   // IO Setup
-  cout << "Enter name of initial neural network file: ";
-  getline (cin,network);
+  cout << "Enter name of trained neural network file: ";
+  getline (cin,netNeural);
 
-  cout << "Enter name of training set file: ";
+  cout << "Enter name of test set file: ";
   getline (cin,test);
 
-  cout << "Enter name of output file: ";
+  cout << "Enter name of results file: ";
   getline (cin,outputfile);
 
-  netfile.open(network.c_str());
+  netfile.open(netNeural.c_str());
   if(!netfile){                            // error handling for inputfile
-    cerr << "ERROR: Unable to open " << network;
+    cerr << "ERROR: Unable to open " << netNeural;
     return(-1);
   }
 
@@ -38,6 +39,12 @@ int main(){
     return(-1);
   }
 
+  NeuralNet network;
+  network.networkTest(netfile, testfile, reportfile);
+
+  netfile.close();
+  testfile.close();
+  reportfile.close();
 
   return 0;
 }

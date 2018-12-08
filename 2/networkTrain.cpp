@@ -51,5 +51,8 @@ int main(){
   NeuralNet network;
   network.networkTrain(initfile, trainfile, outfile, epoch, learnRate);
 
+  initfile.close();
+  trainfile.close();
+  outfile.close();
   return 0;
 }

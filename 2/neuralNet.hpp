@@ -17,6 +17,11 @@ class NeuralNet {
       vector<double> inputs;
       vector<double> outputs;
     };
+    class DataOut{
+      public:
+        unsigned int a, b, c, d;
+        double acc, prec, recall, f1;
+    };
     class Node;
     class Edge{
       public:
