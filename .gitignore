@@ -1,2 +1,12 @@
 
 *.zip
+2/output.txt
+2/sample.NNWDBC.1.100.results
+2/sample.NNWDBC.1.100.trained
+2/sampleInit.init
+2/wdbc.mini_train
+2/wdbc.mini_trained
+2/wdbc.results
+2/wdbc.test
+2/wdbc.train
+2/wdbc.trained
