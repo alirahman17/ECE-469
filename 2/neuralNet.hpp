@@ -41,7 +41,6 @@ class NeuralNet {
         vector<Edge *> outEdge;
     };
   public:
-    NeuralNet();
     double sigmoid(double val);
     double sigmoidPrime(double val);
     void networkTrain(ifstream &initfile, ifstream &trainfile, ofstream &outfile, unsigned int epoch, float learnRate);

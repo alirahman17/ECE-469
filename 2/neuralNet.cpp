@@ -7,10 +7,6 @@
 
 using namespace std;
 
-NeuralNet::NeuralNet(){
-
-}
-
 double NeuralNet::sigmoid(double val){
   return 1.0 / (1.0 + exp(-val));
 }
@@ -69,7 +65,6 @@ void NeuralNet::networkTrain(ifstream &initfile, ifstream &trainfile, ofstream &
         node = this->nodes1[this->nodes1.size() - 1][j];
         node->delta = sigmoidPrime(node->insum) * (trainingSet[i].outputs[j] - node->activation);
       }
-
       for(unsigned int j = this->nodes1.size() - 2; j > 0; j--){
         for(unsigned int k = 0; k < this->nodes1[j].size(); k++){
           node = this->nodes1[j][k];
@@ -80,14 +75,12 @@ void NeuralNet::networkTrain(ifstream &initfile, ifstream &trainfile, ofstream &
           node->delta = sigmoidPrime(node->insum) * sum;
         }
       }
-
       for(unsigned int j = 0; j < this->edgeList.size(); j++){
         edge = this->edgeList[j];
         edge->weight = edge->weight + (learnRate * edge->prev->activation * edge->next->delta);
       }
     }
   }
-
   // Output To File
   for(unsigned int i = 0; i < this->nodes1.size(); i++){
     outfile << ((i == this->nodes1.size() - 1) ? this->nodes1[i].size() : this->nodes1[i].size() - 1);
@@ -96,7 +89,6 @@ void NeuralNet::networkTrain(ifstream &initfile, ifstream &trainfile, ofstream &
     }
   }
   outfile << endl;
-
   for(unsigned int i = 1; i < this->nodes1.size(); i++){
     for(unsigned int j = 0; j < this->nodes1[i].size(); j++){
       if(!this->nodes1[i][j]->bias){
@@ -182,7 +174,6 @@ void NeuralNet::networkTest(ifstream &netfile, ifstream &testfile, ofstream &rep
     b = testingOut[i].b;
     c = testingOut[i].c;
     d = testingOut[i].d;
-
     testingOut[i].acc = (a + d) / (a + b + c + d);
     testingOut[i].prec = a / (a + b);
     testingOut[i].recall = a / (a + c);
@@ -191,21 +182,14 @@ void NeuralNet::networkTest(ifstream &netfile, ifstream &testfile, ofstream &rep
     reportfile << (unsigned int)a << " " << (unsigned int)b << " " << (unsigned int)c << " " << (unsigned int)d << " ";
     reportfile << testingOut[i].acc << " " << testingOut[i].prec << " " << testingOut[i].recall << " " << testingOut[i].f1 << endl;
   }
-
   a = b = c = d = acc = prec = recall = f1 = 0.0;
-
   for(unsigned int i = 0; i < testingOut.size(); i++){
     a += testingOut[i].a;
     b += testingOut[i].b;
     c += testingOut[i].c;
     d += testingOut[i].d;
   }
-
-  reportfile << (a + d) / (a + b + c + d) << " ";
-  reportfile << a / (a + b) << " ";
-  reportfile << a / (a + c) << " ";
-  reportfile << ((2 * (a / (a + b)) * (a / (a + c))) / ((a / (a + b)) + (a / (a + c)))) << endl;
-
+  reportfile << (a + d) / (a + b + c + d) << " " << a / (a + b) << " " << a / (a + c) << " " << ((2 * (a / (a + b)) * (a / (a + c))) / ((a / (a + b)) + (a / (a + c)))) << endl;
   for(unsigned int i = 0; i < testingOut.size(); i++){
     acc += testingOut[i].acc;
     prec += testingOut[i].prec;
@@ -215,7 +199,7 @@ void NeuralNet::networkTest(ifstream &netfile, ifstream &testfile, ofstream &rep
   acc = acc / testingOut.size();
   prec = prec / testingOut.size();
   recall = recall / testingOut.size();
-  
+
   reportfile << acc << " " << prec << " " << recall << " " << ((2 * prec * recall) / (prec + recall)) << endl;
 }
 
@@ -300,9 +284,7 @@ void NeuralNet::readNetFile(ifstream &infile){
           edge->p[1] = k;
           edge->n[0] = i;
           edge->n[1] = j;
-
           this->edgeList.push_back(edge);
-
           this->nodes1[i-1][k]->outEdge.push_back(edge);
           node->inEdge.push_back(edge);
         }
@@ -330,9 +312,7 @@ void NeuralNet::readNetFile(ifstream &infile){
       edge->p[1] = j;
       edge->n[0] = layers.size() - 1;
       edge->n[1] = i;
-
       this->edgeList.push_back(edge);
-
       this->nodes1[layers.size() - 2][j]->outEdge.push_back(edge);
       node->inEdge.push_back(edge);
     }

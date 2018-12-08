@@ -10,3 +10,8 @@
 2/wdbc.test
 2/wdbc.train
 2/wdbc.trained
+*.init
+*.trained
+*.results
+*.train
+*.test
