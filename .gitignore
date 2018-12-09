@@ -17,3 +17,6 @@
 *.test
 *.exe
 *.o
+*.mini_train
+*.mini_trained
+*.txt
